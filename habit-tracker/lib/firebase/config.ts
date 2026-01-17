@@ -24,22 +24,22 @@ const isConfigValid = () => {
 };
 
 // Initialize Firebase only once and only if config is valid
-let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
-let db: Firestore | null = null;
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
 
-if (isConfigValid()) {
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-  } else {
-    app = getApps()[0];
-    auth = getAuth(app);
-    db = getFirestore(app);
-  }
+if (!isConfigValid()) {
+  throw new Error('Firebase configuration is missing. Please set up environment variables.');
+}
+
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
 } else {
-  console.warn('Firebase configuration is missing. Please set up environment variables.');
+  app = getApps()[0];
+  auth = getAuth(app);
+  db = getFirestore(app);
 }
 
 export { app, auth, db };
