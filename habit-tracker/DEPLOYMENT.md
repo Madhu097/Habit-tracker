@@ -26,6 +26,20 @@ vercel login
 
 ### Step 3: Deploy
 
+**IMPORTANT**: Since the Next.js app is in the `habit-tracker` subdirectory, you need a `vercel.json` file at the root of your repository.
+
+Create `vercel.json` in the root directory (one level above `habit-tracker`):
+
+```json
+{
+  "buildCommand": "cd habit-tracker && npm run build",
+  "devCommand": "cd habit-tracker && npm run dev",
+  "installCommand": "cd habit-tracker && npm install",
+  "framework": "nextjs",
+  "outputDirectory": "habit-tracker/.next"
+}
+```
+
 From the project root:
 
 ```bash
@@ -35,10 +49,11 @@ vercel
 Follow the prompts:
 - Set up and deploy? **Yes**
 - Which scope? Select your account
-- Link to existing project? **No**
+- Link to existing project? **No** (or **Yes** if redeploying)
 - Project name? **habit-tracker** (or your preferred name)
-- Directory? **./** (current directory)
+- Directory? **./** (current directory - the root, not habit-tracker)
 - Override settings? **No**
+
 
 ### Step 4: Add Environment Variables
 
