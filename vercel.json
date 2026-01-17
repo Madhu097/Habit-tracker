@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "buildCommand": "cd habit-tracker && npm run build",
+  "installCommand": "cd habit-tracker && npm install",
+  "outputDirectory": "habit-tracker/.next",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/habit-tracker/$1"
+    }
+  ]
+}
