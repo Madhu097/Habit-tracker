@@ -1,0 +1,64 @@
+[debug] [2026-01-16T09:28:41.651Z] ----------------------------------------------------------------------
+[debug] [2026-01-16T09:28:41.662Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\kuruv\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only firestore:indexes
+[debug] [2026-01-16T09:28:41.662Z] CLI Version:   15.2.1
+[debug] [2026-01-16T09:28:41.662Z] Platform:      win32
+[debug] [2026-01-16T09:28:41.663Z] Node Version:  v22.17.0
+[debug] [2026-01-16T09:28:41.663Z] Time:          Fri Jan 16 2026 14:58:41 GMT+0530 (India Standard Time)
+[debug] [2026-01-16T09:28:41.663Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-16T09:28:45.789Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-16T09:28:45.790Z] > authorizing via signed-in user (madhukuruva09@gmail.com)
+[debug] [2026-01-16T09:28:45.790Z] [iam] checking project habit-tracker-13dcb for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]
+[debug] [2026-01-16T09:28:45.791Z] Checked if tokens are valid: false, expires at: 1768492710842
+[debug] [2026-01-16T09:28:45.791Z] Checked if tokens are valid: false, expires at: 1768492710842
+[debug] [2026-01-16T09:28:45.791Z] > refreshing access token with scopes: []
+[debug] [2026-01-16T09:28:45.795Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-16T09:28:45.795Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-16T09:28:46.141Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-16T09:28:46.141Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-16T09:28:46.164Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/habit-tracker-13dcb:testIamPermissions [none]
+[debug] [2026-01-16T09:28:46.165Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/habit-tracker-13dcb:testIamPermissions x-goog-quota-user=projects/habit-tracker-13dcb
+[debug] [2026-01-16T09:28:46.165Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/habit-tracker-13dcb:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[debug] [2026-01-16T09:28:47.643Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/habit-tracker-13dcb:testIamPermissions 200
+[debug] [2026-01-16T09:28:47.644Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/habit-tracker-13dcb:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get"]}
+[info] 
+[info] === Deploying to 'habit-tracker-13dcb'...
+[info] 
+[info] i  deploying firestore 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[info] i  firestore: ensuring required API firestore.googleapis.com is enabled... 
+[debug] [2026-01-16T09:28:47.648Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:47.648Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:47.649Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default) [none]
+[debug] [2026-01-16T09:28:49.382Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default) 200
+[debug] [2026-01-16T09:28:49.383Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default) {"name":"projects/habit-tracker-13dcb/databases/(default)","uid":"97e722c4-cd2b-466a-8861-8daf88aff5a1","createTime":"2026-01-14T13:59:36.403954Z","updateTime":"2026-01-14T13:59:36.403954Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-01-16T08:28:49.109463Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"IMv//r/fj5IDMOi3rsabi5ID"}
+[info] i  firestore: reading indexes from firestore.indexes.json... 
+[info] i  cloud.firestore: checking firestore.rules for compilation errors... 
+[debug] [2026-01-16T09:28:49.386Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:49.386Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:49.386Z] >>> [apiv2][query] POST https://firebaserules.googleapis.com/v1/projects/habit-tracker-13dcb:test [none]
+[debug] [2026-01-16T09:28:49.386Z] >>> [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/habit-tracker-13dcb:test [omitted]
+[debug] [2026-01-16T09:28:50.805Z] <<< [apiv2][status] POST https://firebaserules.googleapis.com/v1/projects/habit-tracker-13dcb:test 200
+[debug] [2026-01-16T09:28:50.805Z] <<< [apiv2][body] POST https://firebaserules.googleapis.com/v1/projects/habit-tracker-13dcb:test {"issues":[{"sourcePosition":{"fileName":"firestore.rules","line":11,"column":14,"currentOffset":311,"endOffset":317},"description":"Unused function: isOwner.","severity":"WARNING"},{"sourcePosition":{"fileName":"firestore.rules","line":12,"column":35,"currentOffset":364,"endOffset":370},"description":"Invalid variable name: request.","severity":"WARNING"}]}
+[warn] !  [W] 11:14 - Unused function: isOwner. 
+[warn] !  [W] 12:35 - Invalid variable name: request. 
+[info] +  cloud.firestore: rules file firestore.rules compiled successfully 
+[info] i  firestore: deploying indexes... 
+[debug] [2026-01-16T09:28:50.808Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:50.808Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:50.808Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default)/collectionGroups/-/indexes [none]
+[debug] [2026-01-16T09:28:51.246Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default)/collectionGroups/-/indexes 200
+[debug] [2026-01-16T09:28:51.246Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default)/collectionGroups/-/indexes {"indexes":[{"name":"projects/habit-tracker-13dcb/databases/(default)/collectionGroups/habits/indexes/CICAgOjXh4EK","queryScope":"COLLECTION","fields":[{"fieldPath":"isActive","order":"ASCENDING"},{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"createdAt","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}],"state":"READY","density":"SPARSE_ALL"},{"name":"projects/habit-tracker-13dcb/databases/(default)/collectionGroups/habitLogs/indexes/CICAgJiUpoMK","queryScope":"COLLECTION","fields":[{"fieldPath":"userId","order":"ASCENDING"},{"fieldPath":"date","order":"ASCENDING"},{"fieldPath":"__name__","order":"ASCENDING"}],"state":"READY","density":"SPARSE_ALL"}]}
+[debug] [2026-01-16T09:28:51.246Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:51.246Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:51.246Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* [none]
+[debug] [2026-01-16T09:28:51.599Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* 200
+[debug] [2026-01-16T09:28:51.599Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default)/collectionGroups/-/fields?filter=indexConfig.usesAncestorConfig=false OR ttlConfig:* {"fields":[{"name":"projects/habit-tracker-13dcb/databases/(default)/collectionGroups/__default__/fields/*","indexConfig":{"indexes":[{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"ASCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","order":"DESCENDING"}],"state":"READY"},{"queryScope":"COLLECTION","fields":[{"fieldPath":"*","arrayConfig":"CONTAINS"}],"state":"READY"}]}}]}
+[debug] [2026-01-16T09:28:51.599Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:51.600Z] Checked if tokens are valid: true, expires at: 1768559325141
+[debug] [2026-01-16T09:28:51.600Z] >>> [apiv2][query] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default) [none]
+[debug] [2026-01-16T09:28:51.926Z] <<< [apiv2][status] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default) 200
+[debug] [2026-01-16T09:28:51.926Z] <<< [apiv2][body] GET https://firestore.googleapis.com/v1/projects/habit-tracker-13dcb/databases/(default) {"name":"projects/habit-tracker-13dcb/databases/(default)","uid":"97e722c4-cd2b-466a-8861-8daf88aff5a1","createTime":"2026-01-14T13:59:36.403954Z","updateTime":"2026-01-14T13:59:36.403954Z","locationId":"nam5","type":"FIRESTORE_NATIVE","concurrencyMode":"PESSIMISTIC","versionRetentionPeriod":"3600s","earliestVersionTime":"2026-01-16T08:28:51.652006Z","appEngineIntegrationMode":"DISABLED","keyPrefix":"s","pointInTimeRecoveryEnablement":"POINT_IN_TIME_RECOVERY_DISABLED","deleteProtectionState":"DELETE_PROTECTION_DISABLED","databaseEdition":"STANDARD","freeTier":true,"realtimeUpdatesMode":"REALTIME_UPDATES_MODE_ENABLED","etag":"II6YmsHfj5IDMOi3rsabi5ID"}
+[info] i  firestore: The following indexes are defined in your project but are not present in your firestore indexes file:
+	(habits) -- (isActive,ASCENDING) (userId,ASCENDING) (createdAt,DESCENDING)  -- Density:SPARSE_ALL 
+	(habitLogs) -- (userId,ASCENDING) (date,ASCENDING)  -- Density:SPARSE_ALL  

@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* Backgrounds */
+  --bg-main: #F9FAFB;
+  --bg-card: #FFFFFF;
+
+  /* Primary Brand */
+  --primary: #2563EB;
+
+  /* Text */
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+
+  /* Borders */
+  --border: #E5E7EB;
+
+  /* Habit Status */
+  --success: #16A34A;
+  --danger: #DC2626;
+  --warning: #D97706;
+  --inactive: #9CA3AF;
+
+  /* Charts */
+  --chart-success: #22C55E;
+  --chart-danger: #EF4444;
+  --chart-primary: #2563EB;
+  --chart-grid: #E5E7EB;
+  --chart-tooltip: #0F172A;
+
+  /* Dark Mode */
+  --bg-main-dark: #020617;
+  --bg-card-dark: #020617;
+  --text-dark: #E5E7EB;
+  --primary-dark: #3B82F6;
+  --success-dark: #22C55E;
+  --danger-dark: #F87171;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom Animations */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+  }
+
+  33% {
+    transform: translateY(-20px) translateX(10px);
+  }
+
+  66% {
+    transform: translateY(10px) translateX(-10px);
+  }
+}
+
+@keyframes twinkle {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.6s ease-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}

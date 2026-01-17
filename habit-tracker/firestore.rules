@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the resource
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Habits Collection
+    match /habits/{habitId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Habit Logs Collection
+    match /habitLogs/{logId} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // Habit Stats Collection
+    match /habitStats/{statsId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
