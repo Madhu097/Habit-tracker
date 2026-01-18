@@ -56,12 +56,26 @@ export default function AuthFlow({ initialMode = 'login' }: AuthFlowProps) {
             router.push('/dashboard');
         } catch (err: any) {
             console.error('Auth error:', err);
-            if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-                setError('Invalid email/mobile or password.');
+
+            // Provide user-friendly error messages
+            if (err.code === 'auth/user-not-found') {
+                setError('No account found with this email/mobile. Please sign up first.');
+            } else if (err.code === 'auth/wrong-password') {
+                setError('Incorrect password. Please try again.');
+            } else if (err.code === 'auth/invalid-credential') {
+                setError('Invalid email/mobile or password. Please check your credentials and try again.');
             } else if (err.code === 'auth/email-already-in-use') {
-                setError('This email or mobile number is already registered.');
+                setError('This email or mobile number is already registered. Please sign in instead.');
+            } else if (err.code === 'auth/weak-password') {
+                setError('Password is too weak. Please use at least 6 characters.');
+            } else if (err.code === 'auth/invalid-email') {
+                setError('Invalid email format. Please enter a valid email address.');
+            } else if (err.code === 'auth/too-many-requests') {
+                setError('Too many failed attempts. Please try again later or reset your password.');
+            } else if (err.code === 'auth/network-request-failed') {
+                setError('Network error. Please check your internet connection and try again.');
             } else {
-                setError(err.message || 'Authentication failed');
+                setError(err.message || 'Authentication failed. Please try again.');
             }
             setLoading(false);
         }

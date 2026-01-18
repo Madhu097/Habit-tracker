@@ -29,6 +29,32 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* JSON-LD Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Habit Tracker",
+            "description": "Track your daily habits, build streaks, and achieve your goals with our powerful habit tracking application.",
+            "url": "https://habit-tracker.vercel.app",
+            "applicationCategory": "ProductivityApplication",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Daily habit tracking",
+              "Streak monitoring",
+              "Analytics and insights",
+              "Progress visualization"
+            ]
+          })
+        }}
+      />
+
       {/* Premium Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
         <div className="text-center">

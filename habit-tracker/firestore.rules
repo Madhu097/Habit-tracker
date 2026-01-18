@@ -12,19 +12,104 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Habits Collection
+    // Helper to validate string length
+    function validString(text, minLen, maxLen) {
+      return text is string && text.size() >= minLen && text.size() <= maxLen;
+    }
+    
+    // Helper to validate timestamp
+    function isValidTimestamp(timestamp) {
+      return timestamp is timestamp;
+    }
+    
+    // Habits Collection - Enhanced Security
     match /habits/{habitId} {
-      allow read, write: if isAuthenticated();
+      // Allow read only if user owns the habit
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Allow create only if authenticated and setting correct userId
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       validString(request.resource.data.name, 1, 100) &&
+                       request.resource.data.color is string &&
+                       request.resource.data.createdAt is timestamp &&
+                       // Validate frequency if present
+                       (!('frequency' in request.resource.data) || 
+                        request.resource.data.frequency.type in ['daily', 'weekly', 'monthly']);
+      
+      // Allow update only if user owns the habit and not changing userId
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid &&
+                       validString(request.resource.data.name, 1, 100);
+      
+      // Allow delete only if user owns the habit
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
     }
     
-    // Habit Logs Collection
+    // Habit Logs Collection - Enhanced Security
     match /habitLogs/{logId} {
-      allow read, write: if isAuthenticated();
+      // Allow read only if user owns the log
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Allow create only if authenticated and setting correct userId
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.habitId is string &&
+                       request.resource.data.status in ['completed', 'missed', 'pending'] &&
+                       request.resource.data.date is timestamp &&
+                       request.resource.data.createdAt is timestamp;
+      
+      // Allow update only if user owns the log
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.status in ['completed', 'missed', 'pending'];
+      
+      // Allow delete only if user owns the log
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
     }
     
-    // Habit Stats Collection
+    // Habit Stats Collection - Enhanced Security
     match /habitStats/{statsId} {
-      allow read, write: if isAuthenticated();
+      // Allow read only if user owns the stats
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Allow create only if authenticated and setting correct userId
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.habitId is string &&
+                       request.resource.data.currentStreak is number &&
+                       request.resource.data.longestStreak is number &&
+                       request.resource.data.totalCompletions is number &&
+                       request.resource.data.totalMisses is number &&
+                       request.resource.data.completionRate is number &&
+                       request.resource.data.lastUpdated is timestamp;
+      
+      // Allow update only if user owns the stats and values are valid
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.currentStreak is number &&
+                       request.resource.data.currentStreak >= 0 &&
+                       request.resource.data.longestStreak is number &&
+                       request.resource.data.longestStreak >= 0 &&
+                       request.resource.data.totalCompletions is number &&
+                       request.resource.data.totalCompletions >= 0 &&
+                       request.resource.data.totalMisses is number &&
+                       request.resource.data.totalMisses >= 0 &&
+                       request.resource.data.completionRate is number &&
+                       request.resource.data.completionRate >= 0 &&
+                       request.resource.data.completionRate <= 100;
+      
+      // Allow delete only if user owns the stats
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
     }
   }
 }
