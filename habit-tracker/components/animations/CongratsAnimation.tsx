@@ -15,11 +15,11 @@ export default function CongratsAnimation({ show, onComplete, habitName }: Congr
     useEffect(() => {
         if (show) {
             setIsVisible(true);
-            // Auto-hide after 3 seconds
+            // Auto-hide after 1.2 seconds
             const timer = setTimeout(() => {
                 setIsVisible(false);
                 setTimeout(onComplete, 300); // Wait for fade out animation
-            }, 3000);
+            }, 1200);
 
             return () => clearTimeout(timer);
         }

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircle, TrendingUp, Zap, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -16,7 +17,8 @@ export default function Home() {
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  // Show loading state while checking auth or if user is authenticated (redirecting)
+  if (loading || user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white transition-opacity duration-500">
         <div className="animate-pulse flex flex-col items-center gap-4">
@@ -28,7 +30,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-hidden">
       {/* JSON-LD Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -56,61 +58,96 @@ export default function Home() {
       />
 
       {/* Premium Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32">
-        <div className="text-center">
-          <h1 className="text-6xl sm:text-7xl font-black text-slate-900 mb-8 tracking-tight">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-32 relative">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+        <div className="absolute top-0 left-0 -ml-20 -mt-20 w-96 h-96 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center relative z-10"
+        >
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-6xl sm:text-7xl font-black text-slate-900 mb-8 tracking-tight"
+          >
             Build Better Habits,
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
               One Day at a Time
             </span>
-          </h1>
-          <p className="text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed">
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="text-xl text-slate-500 mb-12 max-w-2xl mx-auto leading-relaxed"
+          >
             Track your daily routines, master your streaks, and transform your life with our simple yet powerful tracking tool.
-          </p>
+          </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center gap-2 px-10 py-5 bg-slate-900 border-2 border-slate-900 hover:bg-white hover:text-slate-900 text-white text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-slate-200 group"
+              className="inline-flex items-center justify-center gap-2 px-10 py-5 bg-slate-900 border-2 border-slate-900 hover:bg-white hover:text-slate-900 text-white text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl shadow-slate-200 group relative overflow-hidden"
             >
-              Start Your Journey
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <span className="relative z-10 flex items-center gap-2">
+                Start Your Journey
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Features Split */}
-        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div className="group p-8 rounded-3xl hover:bg-slate-50 transition-all duration-300">
-            <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-200 group-hover:-translate-y-1 transition-transform">
-              <CheckCircle className="w-7 h-7 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Daily Tracking</h3>
-            <p className="text-slate-500 leading-relaxed">
-              Precision tracking for your daily wins. Get real-time feedback on your progress.
-            </p>
-          </div>
-
-          <div className="group p-8 rounded-3xl hover:bg-slate-50 transition-all duration-300">
-            <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-200 group-hover:-translate-y-1 transition-transform">
-              <Zap className="w-7 h-7 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Streak Power</h3>
-            <p className="text-slate-500 leading-relaxed">
-              Don't break the chain. Visualize your momentum and stay inspired every single day.
-            </p>
-          </div>
-
-          <div className="group p-8 rounded-3xl hover:bg-slate-50 transition-all duration-300">
-            <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-slate-200 group-hover:-translate-y-1 transition-transform">
-              <TrendingUp className="w-7 h-7 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Smart Insights</h3>
-            <p className="text-slate-500 leading-relaxed">
-              Beautiful charts and data-driven insights to help you understand your growth.
-            </p>
-          </div>
+        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+          {[
+            {
+              icon: CheckCircle,
+              color: "blue",
+              title: "Daily Tracking",
+              desc: "Precision tracking for your daily wins. Get real-time feedback on your progress."
+            },
+            {
+              icon: Zap,
+              color: "indigo",
+              title: "Streak Power",
+              desc: "Don't break the chain. Visualize your momentum and stay inspired every single day."
+            },
+            {
+              icon: TrendingUp,
+              color: "slate",
+              title: "Smart Insights",
+              desc: "Beautiful charts and data-driven insights to help you understand your growth."
+            }
+          ].map((feature, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 + (index * 0.2), duration: 0.6 }}
+              whileHover={{ y: -10, transition: { duration: 0.3 } }}
+              className="group p-8 rounded-3xl bg-white/50 backdrop-blur-sm hover:bg-white border border-transparent hover:border-slate-100 hover:shadow-2xl hover:shadow-slate-200 transition-all duration-300"
+            >
+              <div className={`w-14 h-14 bg-${feature.color === 'slate' ? 'slate-900' : feature.color + '-600'} rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-${feature.color === 'slate' ? 'slate-200' : feature.color + '-200'} group-hover:scale-110 transition-transform duration-300`}>
+                <feature.icon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">{feature.title}</h3>
+              <p className="text-slate-500 leading-relaxed">
+                {feature.desc}
+              </p>
+            </motion.div>
+          ))}
         </div>
       </div>
     </div>

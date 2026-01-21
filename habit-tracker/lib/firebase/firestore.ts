@@ -288,6 +288,16 @@ export const getHabitStats = async (habitId: string, userId: string): Promise<Ha
     return { id: doc.id, ...doc.data() } as HabitStats;
 };
 
+export const getUserHabitStats = async (userId: string): Promise<HabitStats[]> => {
+    const q = query(
+        collection(db, HABIT_STATS_COLLECTION),
+        where('userId', '==', userId)
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HabitStats));
+};
+
 export const updateHabitStats = async (habitId: string, userId: string): Promise<void> => {
     // Fetch all logs for this habit (optimized - only fetch what we need)
     const allLogsQuery = query(
@@ -520,5 +530,64 @@ export const detectAndMarkMissedDays = async (userId: string): Promise<void> => 
     // Update stats for all habits
     for (const habit of habits) {
         await updateHabitStats(habit.id, userId);
+    }
+};
+
+// ============ USER DATA MANAGEMENT ============
+
+export const resetUserData = async (userId: string): Promise<void> => {
+    const batch = writeBatch(db);
+    let operationCount = 0;
+    const MAX_BATCH_SIZE = 450; // Safety margin below 500
+
+    const committedBatches = [];
+
+    // Helper to commit and reset batch if full
+    const checkBatch = async () => {
+        if (operationCount >= MAX_BATCH_SIZE) {
+            committedBatches.push(batch.commit());
+            // We can't reuse the batch object after commit, need a new one or we just await here?
+            // "batch.commit()" returns a promise. Using a new batch is better logic for loops, 
+            // but here we might just await it. 
+            // Actually, simplest is to just await every time we fill up.
+            await batch.commit();
+
+            // Re-instantiate is tricky inside a helper without ref ref updating. 
+            // Let's just do it sequentially without a helper for simplicity or use separate batches for collections.
+        }
+    };
+
+    // We will do it simpler: Fetch all, then chunk into batches of 450.
+
+    // 1. Fetch all docs to delete
+    const habitQuery = query(collection(db, HABITS_COLLECTION), where('userId', '==', userId));
+    const logsQuery = query(collection(db, HABIT_LOGS_COLLECTION), where('userId', '==', userId));
+    const statsQuery = query(collection(db, HABIT_STATS_COLLECTION), where('userId', '==', userId));
+
+    const [habitsSnapshot, logsSnapshot, statsSnapshot] = await Promise.all([
+        getDocs(habitQuery),
+        getDocs(logsQuery),
+        getDocs(statsQuery)
+    ]);
+
+    const allDocs = [
+        ...habitsSnapshot.docs,
+        ...logsSnapshot.docs,
+        ...statsSnapshot.docs
+    ];
+
+    console.log(`[resetUserData] Found ${allDocs.length} documents to delete for user ${userId}`);
+
+    // 2. Delete in chunks
+    for (let i = 0; i < allDocs.length; i += MAX_BATCH_SIZE) {
+        const chunk = allDocs.slice(i, i + MAX_BATCH_SIZE);
+        const currentBatch = writeBatch(db);
+
+        chunk.forEach(doc => {
+            currentBatch.delete(doc.ref);
+        });
+
+        await currentBatch.commit();
+        console.log(`[resetUserData] Deleted batch ${Math.floor(i / MAX_BATCH_SIZE) + 1}`);
     }
 };

@@ -26,6 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [user, setUser] = useState<FirebaseUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+    const [authInitialized, setAuthInitialized] = useState(false);
 
     useEffect(() => {
         // Ensure minimum loading time for smooth transition
@@ -35,24 +36,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const unsubscribe = subscribeToAuthChanges((user) => {
             setUser(user);
-            // Only set loading to false after minimum time has passed
-            if (minLoadingComplete) {
-                setLoading(false);
-            }
+            setAuthInitialized(true);
         });
 
         return () => {
             clearTimeout(minLoadingTimer);
             unsubscribe();
         };
-    }, [minLoadingComplete]);
+    }, []);
 
-    // Update loading state when minimum time completes
+    // Update loading state when both minimum time and auth initialization are complete
     useEffect(() => {
-        if (minLoadingComplete && user !== undefined) {
+        if (minLoadingComplete && authInitialized) {
             setLoading(false);
         }
-    }, [minLoadingComplete, user]);
+    }, [minLoadingComplete, authInitialized]);
 
     return (
         <AuthContext.Provider value={{ user, loading }}>

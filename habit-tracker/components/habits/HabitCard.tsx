@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DailyHabitView } from '@/types';
 import { CheckCircle, XCircle, Circle, Flame, TrendingUp, MoreVertical, Edit2, Trash2, Calendar, Undo2 } from 'lucide-react';
 import { format, addDays, addWeeks, addMonths } from 'date-fns';
+import { motion } from 'framer-motion';
 import CongratsAnimation from '@/components/animations/CongratsAnimation';
 import MissAnimation from '@/components/animations/MissAnimation';
 
@@ -104,7 +105,11 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
 
     return (
         <>
-            <div className={`border-2 rounded-xl p-4 transition-all relative ${getStatusColor()}`}>
+            <motion.div
+                whileHover={{ y: -5, scale: 1.02, boxShadow: "0px 10px 20px rgba(0,0,0,0.1)" }}
+                transition={{ type: "spring", stiffness: 300 }}
+                className={`border-2 rounded-xl p-4 transition-colors relative h-full flex flex-col ${getStatusColor()}`}
+            >
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -170,8 +175,24 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                     </div>
                 </div>
 
+                {/* Motivational Filler for Pending Habits */}
+                {status === 'pending' && (
+                    <div className="flex-1 flex flex-col items-center justify-center py-4 opacity-100 group-hover:opacity-100 transition-opacity">
+                        <div className="text-center space-y-1">
+                            <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-500 mb-1">
+                                <Flame className="w-5 h-5 animate-pulse" />
+                            </div>
+                            <p className="text-xs font-medium text-slate-500">
+                                {stats.currentStreak > 0
+                                    ? "Keep the streak alive!"
+                                    : "Start a new streak today!"}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Stats */}
-                <div className="flex items-center gap-4 mb-3 text-sm">
+                <div className="flex items-center gap-4 mb-3 text-sm mt-auto">
                     <div className="flex items-center gap-1">
                         <Flame className="w-4 h-4 text-orange-500" />
                         <span className="font-medium text-gray-700">{stats.currentStreak}</span>
@@ -224,7 +245,7 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                         </button>
                     </div>
                 )}
-            </div>
+            </motion.div>
 
             {/* Congratulations Animation */}
             <CongratsAnimation

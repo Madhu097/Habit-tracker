@@ -8,21 +8,23 @@ import { useRouter } from 'next/navigation';
 import HabitCard from '@/components/habits/HabitCard';
 import AddHabitModal from '@/components/habits/AddHabitModal';
 import EditHabitModal from '@/components/habits/EditHabitModal';
-import { Plus, BarChart3, LogOut, Loader2 } from 'lucide-react';
+import { Plus, BarChart3, LogOut, Loader2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { DailyHabitView } from '@/types';
+import { motion } from 'framer-motion';
 
 // Lazy load analytics for code splitting
 const AnalyticsCharts = lazy(() => import('@/components/analytics/AnalyticsCharts'));
 
 export default function DashboardPage() {
     const { user, loading: authLoading } = useAuth();
-    const { dailyHabits, loading, error, addHabit, editHabit, markHabitStatus, undoHabitLog, removeHabit } = useHabits();
+    const { dailyHabits, loading, error, addHabit, editHabit, markHabitStatus, undoHabitLog, removeHabit, resetAllData } = useHabits();
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingHabit, setEditingHabit] = useState<DailyHabitView | null>(null);
     const [showAnalytics, setShowAnalytics] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
+    const [resetting, setResetting] = useState(false);
     const router = useRouter();
 
     // Load dark mode preference
@@ -48,6 +50,21 @@ export default function DashboardPage() {
     const handleLogout = async () => {
         await logOut();
         router.push('/login');
+    };
+
+    const handleResetData = async () => {
+        if (confirm('Are you sure you want to delete ALL habits and data? This action cannot be undone.')) {
+            try {
+                setResetting(true);
+                await resetAllData();
+                alert('All data has been reset.');
+            } catch (error) {
+                console.error('Failed to reset data:', error);
+                alert('Failed to reset data. Please try again.');
+            } finally {
+                setResetting(false);
+            }
+        }
     };
 
     const handleComplete = async (habitId: string) => {
@@ -91,6 +108,21 @@ export default function DashboardPage() {
             </div>
         );
     }
+
+    const container = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const item = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    };
 
     return (
         <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
@@ -193,6 +225,19 @@ export default function DashboardPage() {
                             </button>
 
                             <button
+                                onClick={handleResetData}
+                                disabled={resetting}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${darkMode
+                                    ? 'bg-red-900/40 text-red-200 hover:bg-red-900/60'
+                                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                    } disabled:opacity-50`}
+                                title="Reset Account Data"
+                            >
+                                {resetting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 className="w-5 h-5" />}
+                                <span className="hidden sm:inline">Reset</span>
+                            </button>
+
+                            <button
                                 onClick={handleLogout}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${darkMode
                                     ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
@@ -223,10 +268,15 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Today's Date Card */}
-                        <div className={`mb-6 p-4 rounded-xl border-2 ${darkMode
-                            ? 'bg-slate-800/50 border-slate-700'
-                            : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
-                            }`}>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className={`mb-6 p-4 rounded-xl border-2 ${darkMode
+                                ? 'bg-slate-800/50 border-slate-700'
+                                : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                                }`}
+                        >
                             <div className="flex items-center gap-3">
                                 <div className={`p-3 rounded-lg ${darkMode ? 'bg-blue-600/20' : 'bg-blue-600'
                                     }`}>
@@ -243,7 +293,7 @@ export default function DashboardPage() {
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
 
                         {/* Add Habit Button */}
                         <button
@@ -300,19 +350,25 @@ export default function DashboardPage() {
                         )}
 
                         {!loading && dailyHabits.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <motion.div
+                                variants={container}
+                                initial="hidden"
+                                animate="show"
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                            >
                                 {dailyHabits.map((habit) => (
-                                    <HabitCard
-                                        key={habit.id}
-                                        habit={habit}
-                                        onComplete={handleComplete}
-                                        onMiss={handleMiss}
-                                        onEdit={handleEdit}
-                                        onDelete={handleDelete}
-                                        onUndo={handleUndo}
-                                    />
+                                    <motion.div key={habit.id} variants={item}>
+                                        <HabitCard
+                                            habit={habit}
+                                            onComplete={handleComplete}
+                                            onMiss={handleMiss}
+                                            onEdit={handleEdit}
+                                            onDelete={handleDelete}
+                                            onUndo={handleUndo}
+                                        />
+                                    </motion.div>
                                 ))}
-                            </div>
+                            </motion.div>
                         )}
                     </>
                 ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Habit, HabitLog, HabitStats, DailyHabitView } from '@/types';
 import {
     getUserHabits,
@@ -10,6 +10,7 @@ import {
     logHabit,
     getTodayLogsForUser,
     getHabitStats,
+    getUserHabitStats,
     subscribeTodayLogs,
 } from '@/lib/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,29 +20,49 @@ export const useHabits = () => {
     const { user } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [todayLogs, setTodayLogs] = useState<HabitLog[]>([]);
-    const [dailyHabits, setDailyHabits] = useState<DailyHabitView[]>([]);
+    const [habitStats, setHabitStats] = useState<HabitStats[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Fetch habits on mount
+    // Initial Data Load
     useEffect(() => {
         if (!user) {
             setHabits([]);
             setTodayLogs([]);
-            setDailyHabits([]);
+            setHabitStats([]);
+
             setLoading(false);
             return;
         }
 
-        loadHabits();
+        const loadData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                // Fetch habits and stats in parallel
+                const [fetchedHabits, fetchedStats] = await Promise.all([
+                    getUserHabits(user.uid, true),
+                    getUserHabitStats(user.uid)
+                ]);
+
+                setHabits(fetchedHabits);
+                setHabitStats(fetchedStats);
+            } catch (err) {
+                console.error('[useHabits] Error loading data:', err);
+                setError('Failed to load habits data');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
     }, [user]);
 
-    // Subscribe to today's logs (real-time)
+    // Real-time Logs Subscription
     useEffect(() => {
-        if (!user) {
-            setTodayLogs([]);
-            return;
-        }
+        if (!user) return;
 
         const unsubscribe = subscribeTodayLogs(user.uid, (logs) => {
             setTodayLogs(logs);
@@ -50,130 +71,46 @@ export const useHabits = () => {
         return () => unsubscribe();
     }, [user]);
 
-    // Combine habits with today's logs and stats
-    useEffect(() => {
-        const combineDailyData = async () => {
-            console.log('[useHabits] combineDailyData called, habits.length:', habits.length);
-            if (habits.length === 0) {
-                console.log('[useHabits] No habits, setting dailyHabits to []');
-                setDailyHabits([]);
-                return;
-            }
-
-            try {
-                console.log('[useHabits] Combining habits with logs and stats...');
-
-                // Filter habits that should appear today
-                const today = new Date();
-                const { shouldHabitAppearOnDate } = await import('@/lib/firebase/firestore');
-                const todaysHabits = habits.filter(habit => {
-                    // For backward compatibility, if no frequency is set, assume daily
-                    if (!habit.frequency) {
-                        return true;
-                    }
-                    return shouldHabitAppearOnDate(habit, today);
-                });
-
-                console.log('[useHabits] Filtered habits for today:', todaysHabits.length, 'out of', habits.length);
-
-                const combined: DailyHabitView[] = await Promise.all(
-                    todaysHabits.map(async (habit) => {
-                        try {
-                            const todayLog = todayLogs.find(log => log.habitId === habit.id);
-                            const stats = await getHabitStats(habit.id, habit.userId);
-
-                            return {
-                                ...habit,
-                                todayLog,
-                                stats: stats || {
-                                    id: habit.id,
-                                    habitId: habit.id,
-                                    userId: habit.userId,
-                                    currentStreak: 0,
-                                    longestStreak: 0,
-                                    totalCompleted: 0,
-                                    totalMissed: 0,
-                                    completionRate: 0,
-                                    lastUpdated: habit.updatedAt,
-                                },
-                            };
-                        } catch (err) {
-                            // Suppress expected permission errors for stats that don't exist yet
-                            const isPermissionError = err instanceof Error &&
-                                (err.message.includes('permission-denied') || err.message.includes('Missing or insufficient permissions'));
-
-                            if (!isPermissionError) {
-                                console.error('[useHabits] Error processing habit:', habit.id, err);
-                            }
-
-                            // Return habit with default stats if there's an error
-                            return {
-                                ...habit,
-                                todayLog: undefined,
-                                stats: {
-                                    id: habit.id,
-                                    habitId: habit.id,
-                                    userId: habit.userId,
-                                    currentStreak: 0,
-                                    longestStreak: 0,
-                                    totalCompleted: 0,
-                                    totalMissed: 0,
-                                    completionRate: 0,
-                                    lastUpdated: habit.updatedAt,
-                                },
-                            };
-                        }
-                    })
-                );
-
-                console.log('[useHabits] Combined daily habits:', combined);
-                setDailyHabits(combined);
-            } catch (err) {
-                console.error('[useHabits] Error in combineDailyData:', err);
-                // Set dailyHabits to habits with default stats as fallback
-                setDailyHabits(habits.map(habit => ({
-                    ...habit,
-                    todayLog: undefined,
-                    stats: {
-                        id: habit.id,
-                        habitId: habit.id,
-                        userId: habit.userId,
-                        currentStreak: 0,
-                        longestStreak: 0,
-                        totalCompleted: 0,
-                        totalMissed: 0,
-                        completionRate: 0,
-                        lastUpdated: habit.updatedAt,
-                    },
-                })));
-            }
-        };
-
-        combineDailyData();
-    }, [habits, todayLogs]);
-
-    const loadHabits = async () => {
-        if (!user) return;
-
-        try {
-            setLoading(true);
-            setError(null);
-            console.log('[useHabits] Loading habits for user:', user.uid);
-            const fetchedHabits = await getUserHabits(user.uid, true);
-            console.log('[useHabits] Fetched habits:', fetchedHabits);
-            setHabits(fetchedHabits);
-
-            // Also fetch today's logs
-            const logs = await getTodayLogsForUser(user.uid);
-            console.log('[useHabits] Fetched today logs:', logs);
-            setTodayLogs(logs);
-        } catch (err) {
-            setError('Failed to load habits');
-            console.error('[useHabits] Error loading habits:', err);
-        } finally {
-            setLoading(false);
+    // Derived State: Combine Data
+    // Derived State: Combine Data
+    const dailyHabits = useMemo(() => {
+        if (habits.length === 0) {
+            return [];
         }
-    };
+
+        const today = new Date();
+        const filteredHabits = habits.filter(habit => {
+            if (!habit.frequency) return true; // Daily default
+            if (habit.frequency.type === 'daily') return true;
+            if (habit.frequency.type === 'weekly') return habit.frequency.daysOfWeek?.includes(today.getDay()) ?? false;
+            if (habit.frequency.type === 'monthly') return habit.frequency.daysOfMonth?.includes(today.getDate()) ?? false;
+            return true;
+        });
+
+        const combined = filteredHabits.map(habit => {
+            const todayLog = todayLogs.find(log => log.habitId === habit.id);
+            const stat = habitStats.find(s => s.habitId === habit.id); // Matches by habitId
+
+            return {
+                ...habit,
+                todayLog,
+                stats: stat || {
+                    id: `stats-${habit.id}`, // Temporary ID
+                    habitId: habit.id,
+                    userId: habit.userId,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    totalCompleted: 0,
+                    totalMissed: 0,
+                    completionRate: 0,
+                    lastUpdated: habit.updatedAt,
+                },
+            };
+        });
+
+        return combined;
+    }, [habits, todayLogs, habitStats]);
+
 
     const addHabit = useCallback(async (
         name: string,
@@ -182,21 +119,40 @@ export const useHabits = () => {
         frequency?: { type: 'daily' | 'weekly' | 'monthly'; daysOfWeek?: number[]; daysOfMonth?: number[] }
     ) => {
         if (!user) return;
-
         try {
             setError(null);
-            console.log('[useHabits] Creating habit:', { name, description, color, frequency, userId: user.uid });
             const newHabit = await createHabit(user.uid, name, description, color, frequency);
-            console.log('[useHabits] Habit created:', newHabit);
-            setHabits(prev => {
-                const updated = [newHabit, ...prev];
-                console.log('[useHabits] Updated habits state:', updated);
-                return updated;
-            });
+
+            // Optimistically add to habits
+            setHabits(prev => [newHabit, ...prev]);
+
+            // Manually add initial stats to avoid Firestore consistency delays
+            // (Querying immediately after creation might result in empty results)
+            const initialStats: HabitStats = {
+                id: `temp-stats-${newHabit.id}`,
+                habitId: newHabit.id,
+                userId: user.uid,
+                currentStreak: 0,
+                longestStreak: 0,
+                totalCompleted: 0,
+                totalMissed: 0,
+                completionRate: 0,
+                lastUpdated: newHabit.createdAt, // Usage of the same timestamp
+            };
+
+            setHabitStats(prev => [...prev, initialStats]);
+
+            // BACKGROUND SYNC:
+            // Trigger a real data fetch after a short delay to ensure consistency.
+            // This fixes issues where optimistic updates might lack server-generated fields
+            // or if the Firestore index takes a moment to be queryable.
+            setTimeout(() => {
+                loadHabits();
+            }, 500);
+
             return newHabit;
         } catch (err) {
             setError('Failed to create habit');
-            console.error('[useHabits] Error creating habit:', err);
             throw err;
         }
     }, [user]);
@@ -208,7 +164,6 @@ export const useHabits = () => {
             setHabits(prev => prev.map(h => h.id === habitId ? { ...h, ...updates } : h));
         } catch (err) {
             setError('Failed to update habit');
-            console.error(err);
             throw err;
         }
     }, []);
@@ -218,38 +173,98 @@ export const useHabits = () => {
             setError(null);
             await deleteHabit(habitId);
             setHabits(prev => prev.filter(h => h.id !== habitId));
+            setHabitStats(prev => prev.filter(s => s.habitId !== habitId));
         } catch (err) {
             setError('Failed to delete habit');
-            console.error(err);
             throw err;
         }
     }, []);
 
     const markHabitStatus = useCallback(async (habitId: string, status: 'completed' | 'missed') => {
         if (!user) return;
-
         try {
             setError(null);
             await logHabit(habitId, user.uid, new Date(), status);
-            // The real-time listener will update todayLogs automatically
+            // todayLogs updates automatically via subscription
+
+            // Manually refresh stats for this habit to reflect new streaks
+            const updatedStat = await getHabitStats(habitId, user.uid);
+            if (updatedStat) {
+                setHabitStats(prev => {
+                    const idx = prev.findIndex(s => s.habitId === habitId);
+                    if (idx >= 0) {
+                        const newStats = [...prev];
+                        newStats[idx] = updatedStat;
+                        return newStats;
+                    }
+                    return [...prev, updatedStat];
+                });
+            }
         } catch (err) {
             setError('Failed to log habit');
-            console.error(err);
             throw err;
         }
     }, [user]);
 
     const undoHabitLog = useCallback(async (habitId: string) => {
         if (!user) return;
-
         try {
             setError(null);
-            const { deleteHabitLog } = await import('@/lib/firebase/firestore');
+            const { deleteHabitLog } = await import('@/lib/firebase/firestore'); // keep dynamic for now or move up
             await deleteHabitLog(habitId, user.uid, new Date());
-            // The real-time listener will update todayLogs automatically
+
+            // Refresh stats
+            const updatedStat = await getHabitStats(habitId, user.uid);
+            if (updatedStat) {
+                setHabitStats(prev => {
+                    const idx = prev.findIndex(s => s.habitId === habitId);
+                    if (idx >= 0) {
+                        const newStats = [...prev];
+                        newStats[idx] = updatedStat;
+                        return newStats;
+                    }
+                    return prev;
+                });
+            }
         } catch (err) {
             setError('Failed to undo habit log');
-            console.error(err);
+            throw err;
+        }
+    }, [user]);
+
+
+    const loadHabits = async () => {
+        // Expose manual reload if needed
+        if (!user) return;
+        setLoading(true);
+        try {
+            const [fetchedHabits, fetchedStats] = await Promise.all([
+                getUserHabits(user.uid, true),
+                getUserHabitStats(user.uid)
+            ]);
+            setHabits(fetchedHabits);
+            setHabitStats(fetchedStats);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetAllData = useCallback(async () => {
+        if (!user) return;
+        try {
+            setError(null);
+            const { resetUserData } = await import('@/lib/firebase/firestore');
+            await resetUserData(user.uid);
+
+            // Clear local state
+            setHabits([]);
+            setTodayLogs([]);
+            setHabitStats([]);
+            // dailyHabits updates automatically via useMemo
+        } catch (err) {
+            setError('Failed to reset data');
             throw err;
         }
     }, [user]);
@@ -265,5 +280,6 @@ export const useHabits = () => {
         markHabitStatus,
         undoHabitLog,
         refreshHabits: loadHabits,
+        resetAllData,
     };
 };
