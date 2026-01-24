@@ -84,11 +84,11 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
     const getStatusColor = () => {
         switch (status) {
             case 'completed':
-                return 'border-green-500 bg-green-50';
+                return 'border-gray-200 dark:border-green-600 !bg-white dark:!bg-green-950/30 shadow-sm';
             case 'missed':
-                return 'border-red-500 bg-red-50';
+                return 'border-gray-200 dark:border-red-600 !bg-white dark:!bg-red-950/30 shadow-sm';
             default:
-                return 'border-gray-200 bg-white';
+                return 'border-gray-200 dark:border-slate-700 !bg-white dark:!bg-slate-900 shadow-sm';
         }
     };
 
@@ -108,19 +108,19 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
             <motion.div
                 whileHover={{ y: -5, scale: 1.02, boxShadow: "0px 10px 20px rgba(0,0,0,0.1)" }}
                 transition={{ type: "spring", stiffness: 300 }}
-                className={`border-2 rounded-xl p-4 transition-colors relative h-full flex flex-col ${getStatusColor()}`}
+                className={`border rounded-xl p-4 transition-colors relative h-full flex flex-col ${getStatusColor()}`}
             >
                 <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
+                    <div className="flex-1 pr-2">
                         <div className="flex items-center gap-2 mb-1">
                             <div
-                                className="w-3 h-3 rounded-full"
+                                className="w-3 h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: habit.color }}
                             />
-                            <h3 className="font-semibold text-gray-900">{habit.name}</h3>
+                            <h3 className="font-semibold text-lg !text-black dark:!text-white break-words">{habit.name}</h3>
                         </div>
                         {habit.description && (
-                            <p className="text-sm text-gray-600">{habit.description}</p>
+                            <p className="text-sm !text-gray-700 dark:!text-slate-300 line-clamp-2">{habit.description}</p>
                         )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -130,10 +130,10 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                         <div className="relative">
                             <button
                                 onClick={() => setShowMenu(!showMenu)}
-                                className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
+                                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                 aria-label="More options"
                             >
-                                <MoreVertical className="w-5 h-5 text-gray-600" />
+                                <MoreVertical className="w-5 h-5 !text-gray-700 dark:!text-slate-400" />
                             </button>
 
                             {showMenu && (
@@ -145,13 +145,13 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                                     />
 
                                     {/* Dropdown Menu */}
-                                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-20">
                                         <button
                                             onClick={() => {
                                                 onEdit(habit.id);
                                                 setShowMenu(false);
                                             }}
-                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                            className="w-full px-4 py-2 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center gap-2"
                                         >
                                             <Edit2 className="w-4 h-4" />
                                             Edit Habit
@@ -163,7 +163,7 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                                                 }
                                                 setShowMenu(false);
                                             }}
-                                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                             Delete Habit
@@ -179,10 +179,10 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                 {status === 'pending' && (
                     <div className="flex-1 flex flex-col items-center justify-center py-4 opacity-100 group-hover:opacity-100 transition-opacity">
                         <div className="text-center space-y-1">
-                            <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 text-blue-500 mb-1">
+                            <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-500 mb-1">
                                 <Flame className="w-5 h-5 animate-pulse" />
                             </div>
-                            <p className="text-xs font-medium text-slate-500">
+                            <p className="text-xs font-medium !text-gray-700 dark:!text-slate-400">
                                 {stats.currentStreak > 0
                                     ? "Keep the streak alive!"
                                     : "Start a new streak today!"}
@@ -193,14 +193,14 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
 
                 {/* Stats */}
                 <div className="flex items-center gap-4 mb-3 text-sm mt-auto">
-                    <div className="flex items-center gap-1">
-                        <Flame className="w-4 h-4 text-orange-500" />
-                        <span className="font-medium text-gray-700">{stats.currentStreak}</span>
-                        <span className="text-gray-500">streak</span>
+                    <div className="flex items-center gap-1.5">
+                        <Flame className="w-4 h-4 text-orange-500 dark:text-orange-400" />
+                        <span className="font-semibold text-base !text-black dark:!text-white">{stats.currentStreak}</span>
+                        <span className="!text-gray-700 dark:!text-slate-300 font-normal">streak</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4 text-blue-500" />
-                        <span className="font-medium text-gray-700">{stats.completionRate}%</span>
+                    <div className="flex items-center gap-1.5">
+                        <TrendingUp className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                        <span className="font-semibold text-base !text-black dark:!text-white">{stats.completionRate}%</span>
                     </div>
                 </div>
 
@@ -225,11 +225,11 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                 {status !== 'pending' && (
                     <div className="space-y-2">
                         <div className="text-center py-2 space-y-1">
-                            <div className="text-sm font-medium text-gray-600">
+                            <div className="text-sm font-normal !text-black dark:!text-slate-200">
                                 {status === 'completed' ? '✓ Completed today' : '✗ Missed today'}
                             </div>
                             {status === 'completed' && (
-                                <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+                                <div className="flex items-center justify-center gap-1 text-xs !text-gray-700 dark:!text-slate-300">
                                     <Calendar className="w-3 h-3" />
                                     <span>Next due: {getNextDueDate(habit)}</span>
                                 </div>
@@ -238,7 +238,7 @@ export default function HabitCard({ habit, onComplete, onMiss, onEdit, onDelete,
                         {/* Undo Button */}
                         <button
                             onClick={() => onUndo(habit.id)}
-                            className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg font-medium transition-colors text-sm"
+                            className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 !text-black dark:!text-slate-300 py-2 rounded-lg font-normal transition-colors text-sm"
                         >
                             <Undo2 className="w-4 h-4" />
                             Undo

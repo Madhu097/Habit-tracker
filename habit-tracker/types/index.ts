@@ -74,3 +74,24 @@ export interface MonthlyStats {
     total: number;
     completionRate: number;
 }
+
+// Water Tracking Types
+export interface WaterLog {
+    id: string;
+    userId: string;
+    date: string; // YYYY-MM-DD
+    amount: number; // Current daily total in ml
+    goal: number; // Goal for that day in ml
+    updatedAt: Timestamp;
+}
+
+export interface WaterSettings {
+    id: string; // usually userId
+    userId: string;
+    weight: number; // in kg
+    activityLevel: 'sedentary' | 'moderate' | 'active';
+    climate: 'normal' | 'hot';
+    calculatedGoal: number; // in ml
+    isSetup: boolean;
+    updatedAt: Timestamp;
+}

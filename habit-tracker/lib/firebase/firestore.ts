@@ -4,6 +4,7 @@ import {
     getDoc,
     getDocs,
     addDoc,
+    setDoc,
     updateDoc,
     deleteDoc,
     query,
@@ -16,7 +17,7 @@ import {
     QueryConstraint,
 } from 'firebase/firestore';
 import { db } from './config';
-import { Habit, HabitLog, HabitStats, HabitLogStatus } from '@/types';
+import { Habit, HabitLog, HabitStats, HabitLogStatus, WaterSettings, WaterLog } from '@/types';
 import { format, startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 // Collection references
@@ -590,4 +591,96 @@ export const resetUserData = async (userId: string): Promise<void> => {
         await currentBatch.commit();
         console.log(`[resetUserData] Deleted batch ${Math.floor(i / MAX_BATCH_SIZE) + 1}`);
     }
+};
+
+// ============ WATER TRACKING ============
+
+const WATER_SETTINGS_COLLECTION = 'waterSettings';
+const WATER_LOGS_COLLECTION = 'waterLogs';
+
+export const getWaterSettings = async (userId: string): Promise<WaterSettings | null> => {
+    const docRef = doc(db, WATER_SETTINGS_COLLECTION, userId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as WaterSettings;
+    }
+    return null;
+};
+
+export const saveWaterSettings = async (userId: string, settings: Partial<WaterSettings>): Promise<void> => {
+    const docRef = doc(db, WATER_SETTINGS_COLLECTION, userId);
+    await setDoc(docRef, {
+        userId,
+        ...settings,
+        updatedAt: Timestamp.now(),
+    }, { merge: true });
+};
+
+export const getTodayWaterLog = async (userId: string): Promise<WaterLog | null> => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const q = query(
+        collection(db, WATER_LOGS_COLLECTION),
+        where('userId', '==', userId),
+        where('date', '==', todayStr),
+        limit(1)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as WaterLog;
+};
+
+export const updateWaterIntake = async (userId: string, amount: number, goal: number): Promise<void> => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const existingLog = await getTodayWaterLog(userId);
+
+    if (existingLog) {
+        const docRef = doc(db, WATER_LOGS_COLLECTION, existingLog.id);
+        await updateDoc(docRef, {
+            amount,
+            goal,
+            updatedAt: Timestamp.now(),
+        });
+    } else {
+        await addDoc(collection(db, WATER_LOGS_COLLECTION), {
+            userId,
+            date: todayStr,
+            amount,
+            goal,
+            updatedAt: Timestamp.now(),
+        });
+    }
+};
+
+// Real-time listener for today's water log
+export const subscribeTodayWaterLog = (
+    userId: string,
+    callback: (log: WaterLog | null) => void
+): (() => void) => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    const q = query(
+        collection(db, WATER_LOGS_COLLECTION),
+        where('userId', '==', userId),
+        where('date', '==', today),
+        limit(1)
+    );
+
+    return onSnapshot(
+        q,
+        (snapshot) => {
+            if (snapshot.empty) {
+                callback(null);
+            } else {
+                const doc = snapshot.docs[0];
+                callback({ id: doc.id, ...doc.data() } as WaterLog);
+            }
+        },
+        (error) => {
+            // Silently handle
+            callback(null);
+        }
+    );
 };
