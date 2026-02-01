@@ -61,13 +61,15 @@ service cloud.firestore {
                        request.resource.data.habitId is string &&
                        request.resource.data.status in ['completed', 'missed', 'pending'] &&
                        request.resource.data.date is string &&
-                       request.resource.data.createdAt is timestamp;
+                       isValidTimestamp(request.resource.data.createdAt) &&
+                       isValidTimestamp(request.resource.data.updatedAt);
       
       // Allow update only if user owns the log
       allow update: if isAuthenticated() && 
                        resource.data.userId == request.auth.uid &&
                        request.resource.data.userId == request.auth.uid &&
-                       request.resource.data.status in ['completed', 'missed', 'pending'];
+                       request.resource.data.status in ['completed', 'missed', 'pending'] &&
+                       isValidTimestamp(request.resource.data.updatedAt);
       
       // Allow delete only if user owns the log
       allow delete: if isAuthenticated() && 
