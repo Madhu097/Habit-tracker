@@ -86,14 +86,19 @@ export const useWater = () => {
             updatedAt: prev?.updatedAt || (null as any)
         } as WaterSettings));
 
-        // Background save
-        await saveWaterSettings(user.uid, {
-            weight,
-            activityLevel,
-            climate,
-            calculatedGoal: goal,
-            isSetup: true
-        });
+        // Background save with error handling
+        try {
+            await saveWaterSettings(user.uid, {
+                weight,
+                activityLevel,
+                climate,
+                calculatedGoal: goal,
+                isSetup: true
+            });
+        } catch (error) {
+            console.error('[useWater] Error saving water settings:', error);
+            // Optimistic update already applied, so UI still works
+        }
     }, [user]);
 
     const addWater = useCallback(async (amount: number) => {

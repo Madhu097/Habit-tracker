@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calculator, Activity, Sun, Droplets, ArrowRight, Brain } from 'lucide-react';
+import { Calculator, Activity, Sun, Droplets, ArrowRight } from 'lucide-react';
 import { useWater } from '@/hooks/useWater';
 
 interface WaterIntakeCalculatorProps {
@@ -11,32 +11,49 @@ interface WaterIntakeCalculatorProps {
 }
 
 export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCalculatorProps) {
-    const { updateSettings } = useWater();
-    const [step, setStep] = useState(1);
-    const [calculating, setCalculating] = useState(false);
+    const { updateSettings, calculateGoal } = useWater();
+    const [step, setStep] = useState<'input' | 'result'>('input');
+    const [calculatedGoal, setCalculatedGoal] = useState(0);
 
     // Form State
     const [weight, setWeight] = useState(70);
     const [activity, setActivity] = useState<'sedentary' | 'moderate' | 'active'>('moderate');
     const [climate, setClimate] = useState<'normal' | 'hot'>('normal');
 
+    // Reset state when modal opens
+    React.useEffect(() => {
+        if (isOpen) {
+            setStep('input');
+            setCalculatedGoal(0);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleCalculate = async () => {
-        setStep(2);
-        setCalculating(true);
+        // Calculate the goal
+        const goal = calculateGoal(weight, activity, climate);
+        setCalculatedGoal(goal);
 
-        // Simulate "AI Calculation" delay
-        setTimeout(async () => {
+        // Show result screen
+        setStep('result');
+
+        // Update settings in background
+        try {
             await updateSettings(weight, activity, climate);
-            setCalculating(false);
-            onClose();
-        }, 300);
+        } catch (error) {
+            console.error('[WaterCalculator] Error updating water settings:', error);
+        }
+    };
+
+    const handleClose = () => {
+        setStep('input');
+        onClose();
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -47,7 +64,7 @@ export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCa
                 <div className="bg-blue-600 p-6 text-white text-center relative overflow-hidden">
                     <div className="relative z-10">
                         <div className="mx-auto w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-3 backdrop-blur-md">
-                            <Brain className="w-6 h-6 text-white" />
+                            <Droplets className="w-6 h-6 text-white" />
                         </div>
                         <h2 className="text-2xl font-bold mb-1">Smart Water Plan</h2>
                         <p className="text-blue-100 text-sm">AI-Powered Hydration Analysis</p>
@@ -59,7 +76,7 @@ export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCa
 
                 {/* Content */}
                 <div className="p-8">
-                    {step === 1 ? (
+                    {step === 'input' ? (
                         <div className="space-y-6">
                             {/* Weight */}
                             <div className="space-y-3">
@@ -139,22 +156,66 @@ export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCa
                             </button>
                         </div>
                     ) : (
-                        <div className="text-center py-10 space-y-6">
-                            <div className="relative mx-auto w-24 h-24">
-                                <div className="absolute inset-0 border-4 border-blue-100 rounded-full animate-pulse" />
-                                <div className="absolute inset-2 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Brain className="w-8 h-8 text-blue-500 animate-pulse" />
-                                </div>
-                            </div>
+                        <div className="text-center space-y-6 py-4">
+                            {/* Success Icon */}
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", duration: 0.5 }}
+                                className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-lg"
+                            >
+                                <Droplets className="w-10 h-10 text-white" />
+                            </motion.div>
+
+                            {/* Result Title */}
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                    Analyzing Bio-Data...
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                    Your Daily Water Goal
                                 </h3>
-                                <p className="text-gray-500 text-sm">
-                                    Optimizing daily hydration targets based on your unique profile.
+                                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                                    Personalized for your lifestyle
                                 </p>
                             </div>
+
+                            {/* Water Goal Display */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl p-8 border-2 border-blue-200 dark:border-blue-800"
+                            >
+                                <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                                    {calculatedGoal}
+                                    <span className="text-3xl ml-2">ml</span>
+                                </div>
+                                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                                    ≈ {(calculatedGoal / 250).toFixed(1)} glasses (250ml each)
+                                </div>
+                            </motion.div>
+
+                            {/* Info Cards */}
+                            <div className="grid grid-cols-3 gap-3 text-xs">
+                                <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
+                                    <div className="font-semibold text-gray-900 dark:text-white">{weight}kg</div>
+                                    <div className="text-gray-500">Weight</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
+                                    <div className="font-semibold text-gray-900 dark:text-white capitalize">{activity}</div>
+                                    <div className="text-gray-500">Activity</div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-slate-800 rounded-xl p-3">
+                                    <div className="font-semibold text-gray-900 dark:text-white capitalize">{climate}</div>
+                                    <div className="text-gray-500">Climate</div>
+                                </div>
+                            </div>
+
+                            {/* Close Button */}
+                            <button
+                                onClick={handleClose}
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all hover:scale-[1.02] shadow-lg"
+                            >
+                                Got it! Start Tracking
+                            </button>
                         </div>
                     )}
                 </div>
