@@ -133,7 +133,7 @@ const animations = {
     calendarDayStagger: {
         initial: { opacity: 0, scale: 0.8 },
         animate: { opacity: 1, scale: 1 },
-        transition: (index) => ({ delay: index * 0.01 }),
+        transition: (index: number) => ({ delay: index * 0.01 }),
     },
 
     // Month transition
