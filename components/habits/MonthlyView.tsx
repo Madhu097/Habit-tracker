@@ -53,7 +53,7 @@ const MonthlyView: React.FC<MonthlyViewProps> = ({ habits, darkMode = false }) =
                 const habitsToFetch = selectedHabit ? [selectedHabit] : habits;
 
                 for (const habit of habitsToFetch) {
-                    const logs = await getHabitLogsInRange(habit.id, startDate, endDate);
+                    const logs = await getHabitLogsInRange(habit.id, user.uid, startDate, endDate);
                     allLogs.push(...logs);
                 }
 

@@ -132,7 +132,7 @@ export const logHabit = async (
     const dateStr = format(date, 'yyyy-MM-dd');
 
     // Check if log already exists for this date
-    const existingLog = await getHabitLogForDate(habitId, dateStr);
+    const existingLog = await getHabitLogForDate(habitId, userId, dateStr);
 
     if (existingLog) {
         // Update existing log
@@ -166,25 +166,29 @@ export const logHabit = async (
     }
 };
 
-export const getHabitLogForDate = async (habitId: string, dateStr: string): Promise<HabitLog | null> => {
+export const getHabitLogForDate = async (habitId: string, userId: string, dateStr: string): Promise<HabitLog | null> => {
+    // FAILSAFE: Fetch all logs for this habit/user and filter in memory to avoid "Composite Index" errors.
+    // While less efficient for habits with thousands of logs, this guarantees specific indexes aren't required.
     const q = query(
         collection(db, HABIT_LOGS_COLLECTION),
         where('habitId', '==', habitId),
-        where('date', '==', dateStr),
-        limit(1)
+        where('userId', '==', userId)
     );
 
     const snapshot = await getDocs(q);
     if (snapshot.empty) return null;
 
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as HabitLog;
+    // Find the log that matches the date string exactly
+    const match = snapshot.docs.find(doc => doc.data().date === dateStr);
+
+    if (!match) return null;
+    return { id: match.id, ...match.data() } as HabitLog;
 };
 
 // Delete a habit log (for undo functionality)
 export const deleteHabitLog = async (habitId: string, userId: string, date: Date): Promise<void> => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    const existingLog = await getHabitLogForDate(habitId, dateStr);
+    const existingLog = await getHabitLogForDate(habitId, userId, dateStr);
 
     if (existingLog) {
         const logRef = doc(db, HABIT_LOGS_COLLECTION, existingLog.id);
@@ -197,20 +201,25 @@ export const deleteHabitLog = async (habitId: string, userId: string, date: Date
 
 export const getHabitLogsInRange = async (
     habitId: string,
+    userId: string,
     startDate: string,
     endDate: string
 ): Promise<HabitLog[]> => {
-    // Optimized query with date range - requires composite index
+    // Optimized: Fetch strictly by habitId and userId, then filter/sort in memory
+    // This avoids requiring a composite index for equality + range + sort
     const q = query(
         collection(db, HABIT_LOGS_COLLECTION),
         where('habitId', '==', habitId),
-        where('date', '>=', startDate),
-        where('date', '<=', endDate),
-        orderBy('date', 'desc')
+        where('userId', '==', userId)
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HabitLog));
+    const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HabitLog));
+
+    // Filter and sort in memory
+    return logs
+        .filter(log => log.date >= startDate && log.date <= endDate)
+        .sort((a, b) => b.date.localeCompare(a.date));
 };
 
 export const getTodayLogsForUser = async (userId: string): Promise<HabitLog[]> => {
@@ -300,15 +309,19 @@ export const getUserHabitStats = async (userId: string): Promise<HabitStats[]> =
 };
 
 export const updateHabitStats = async (habitId: string, userId: string): Promise<void> => {
-    // Fetch all logs for this habit (optimized - only fetch what we need)
+    // Fetch all logs for this habit
+    // Removed orderBy('date', 'desc') to avoid composite index error
     const allLogsQuery = query(
         collection(db, HABIT_LOGS_COLLECTION),
         where('habitId', '==', habitId),
-        orderBy('date', 'desc')
+        where('userId', '==', userId)
     );
 
     const logsSnapshot = await getDocs(allLogsQuery);
     const logs = logsSnapshot.docs.map(doc => doc.data() as HabitLog);
+
+    // Sort logs in memory for streak calculation (descending date)
+    logs.sort((a, b) => b.date.localeCompare(a.date));
 
     // Calculate stats
     const totalCompleted = logs.filter(log => log.status === 'completed').length;
@@ -329,15 +342,19 @@ export const updateHabitStats = async (habitId: string, userId: string): Promise
 
     const statsSnapshot = await getDocs(statsQuery);
 
-    const statsData = {
+    const statsData: any = {
         currentStreak,
         longestStreak,
         totalCompleted,
         totalMissed,
         completionRate,
-        lastCompletedDate,
         lastUpdated: Timestamp.now(),
     };
+
+    // Only include lastCompletedDate if it's defined (Firestore doesn't accept undefined)
+    if (lastCompletedDate !== undefined) {
+        statsData.lastCompletedDate = lastCompletedDate;
+    }
 
     if (!statsSnapshot.empty) {
         // Update existing stats document
@@ -510,7 +527,7 @@ export const detectAndMarkMissedDays = async (userId: string): Promise<void> => 
     const batch = writeBatch(db);
 
     for (const habit of habits) {
-        const yesterdayLog = await getHabitLogForDate(habit.id, yesterday);
+        const yesterdayLog = await getHabitLogForDate(habit.id, userId, yesterday);
 
         // If no log exists for yesterday, mark as missed
         if (!yesterdayLog) {
