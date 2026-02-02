@@ -5,6 +5,7 @@ import { signUp, signIn } from '@/lib/firebase/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Smartphone, Mail, Lock, User, ArrowRight, Home, Moon, Sun, CheckCircle, Zap, BarChart3, ChevronRight } from 'lucide-react';
+import Logo from '@/components/ui/Logo';
 
 interface AuthFlowProps {
     initialMode?: 'login' | 'signup';
@@ -50,7 +51,11 @@ export default function AuthFlow({ initialMode = 'login' }: AuthFlowProps) {
             if (isLogin) {
                 await signIn(emailFormatted, password);
             } else {
-                if (password.length < 6) throw new Error('Password should be at least 6 characters');
+                if (password.length < 8) throw new Error('Password must be at least 8 characters long');
+                if (!/[A-Z]/.test(password)) throw new Error('Password must contain at least one uppercase letter');
+                if (!/[0-9]/.test(password)) throw new Error('Password must contain at least one number');
+                if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) throw new Error('Password must contain at least one special symbol');
+
                 await signUp(emailFormatted, password, displayName);
             }
             router.push('/dashboard');
@@ -163,6 +168,9 @@ export default function AuthFlow({ initialMode = 'login' }: AuthFlowProps) {
                 <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 overflow-hidden">
                     <div className="max-w-md mx-auto w-full">
                         <div className="mb-8">
+                            <div className="mb-8 flex">
+                                <Logo darkMode={darkMode} iconSize={42} textSize="text-3xl" />
+                            </div>
                             <h1 className={`text-4xl font-black mb-3 tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
                                 {isLogin ? 'Sign In' : 'Sign Up'}
                             </h1>
@@ -235,6 +243,22 @@ export default function AuthFlow({ initialMode = 'login' }: AuthFlowProps) {
                                         <ChevronRight className={`w-5 h-5 transition-transform ${showPassword ? 'rotate-90' : ''}`} />
                                     </button>
                                 </div>
+                                {!isLogin && (
+                                    <div className="mt-2 text-xs flex flex-wrap gap-2">
+                                        <span className={`${password.length >= 8 ? 'text-green-500' : darkMode ? 'text-slate-500' : 'text-slate-400'} flex items-center gap-1`}>
+                                            <CheckCircle className="w-3 h-3" /> Min 8 chars
+                                        </span>
+                                        <span className={`${/[A-Z]/.test(password) ? 'text-green-500' : darkMode ? 'text-slate-500' : 'text-slate-400'} flex items-center gap-1`}>
+                                            <CheckCircle className="w-3 h-3" /> Uppercase
+                                        </span>
+                                        <span className={`${/[0-9]/.test(password) ? 'text-green-500' : darkMode ? 'text-slate-500' : 'text-slate-400'} flex items-center gap-1`}>
+                                            <CheckCircle className="w-3 h-3" /> Number
+                                        </span>
+                                        <span className={`${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-green-500' : darkMode ? 'text-slate-500' : 'text-slate-400'} flex items-center gap-1`}>
+                                            <CheckCircle className="w-3 h-3" /> Symbol
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             <button

@@ -15,6 +15,7 @@ export const useWater = () => {
     const [settings, setSettings] = useState<WaterSettings | null>(null);
     const [todayLog, setTodayLog] = useState<WaterLog | null>(null);
     const [loading, setLoading] = useState(true);
+    const [additionHistory, setAdditionHistory] = useState<number[]>([]); // Track all additions for multiple undo
 
     // Load Settings
     useEffect(() => {
@@ -43,11 +44,23 @@ export const useWater = () => {
         if (!user) return;
 
         const unsubscribe = subscribeTodayWaterLog(user.uid, (log) => {
+            console.log('[useWater] Firestore log updated:', log?.amount, 'Current history length:', additionHistory.length);
             setTodayLog(log);
         });
 
         return () => unsubscribe();
     }, [user]);
+
+    // Clear history when date changes (new day)
+    useEffect(() => {
+        const today = new Date().toISOString().split('T')[0];
+        const logDate = todayLog?.date;
+
+        if (logDate && logDate !== today) {
+            // New day, clear history
+            setAdditionHistory([]);
+        }
+    }, [todayLog?.date]);
 
     const calculateGoal = (weight: number, activityLevel: 'sedentary' | 'moderate' | 'active', climate: 'normal' | 'hot') => {
         // Base calculation: 33ml per kg
@@ -107,6 +120,13 @@ export const useWater = () => {
         const currentAmount = todayLog?.amount || 0;
         const newAmount = currentAmount + amount;
 
+        // Add to history for undo capability
+        setAdditionHistory(prev => {
+            const newHistory = [...prev, amount];
+            console.log('[useWater] Adding to history:', amount, 'New history:', newHistory);
+            return newHistory;
+        });
+
         // Optimistic update
         setTodayLog(prev => ({
             id: prev?.id || 'temp-id',
@@ -120,12 +140,92 @@ export const useWater = () => {
         await updateWaterIntake(user.uid, newAmount, settings.calculatedGoal);
     }, [user, settings, todayLog]);
 
+    const undoLastAddition = useCallback(async () => {
+        if (!user || !settings || additionHistory.length === 0) return;
+
+        // Get the last addition from history
+        const lastAmount = additionHistory[additionHistory.length - 1];
+        const currentAmount = todayLog?.amount || 0;
+        const newAmount = Math.max(0, currentAmount - lastAmount);
+
+        // Remove last addition from history
+        setAdditionHistory(prev => prev.slice(0, -1));
+
+        // Optimistic update
+        setTodayLog(prev => ({
+            id: prev?.id || 'temp-id',
+            userId: user.uid,
+            date: prev?.date || new Date().toISOString().split('T')[0],
+            amount: newAmount,
+            goal: settings.calculatedGoal,
+            updatedAt: prev?.updatedAt || (null as any)
+        }));
+
+        await updateWaterIntake(user.uid, newAmount, settings.calculatedGoal);
+    }, [user, settings, todayLog, additionHistory]);
+
+    const setManualGoal = useCallback(async (manualGoal: number) => {
+        if (!user) return;
+
+        // Optimistic update
+        setSettings(prev => ({
+            ...prev,
+            id: user.uid,
+            userId: user.uid,
+            weight: prev?.weight || 70,
+            activityLevel: prev?.activityLevel || 'moderate',
+            climate: prev?.climate || 'normal',
+            calculatedGoal: manualGoal,
+            isSetup: true,
+            updatedAt: prev?.updatedAt || (null as any)
+        } as WaterSettings));
+
+        // Save to Firestore
+        try {
+            await saveWaterSettings(user.uid, {
+                weight: settings?.weight || 70,
+                activityLevel: settings?.activityLevel || 'moderate',
+                climate: settings?.climate || 'normal',
+                calculatedGoal: manualGoal,
+                isSetup: true
+            });
+        } catch (error) {
+            console.error('[useWater] Error saving manual goal:', error);
+        }
+    }, [user, settings]);
+
+    const resetWater = useCallback(async () => {
+        if (!user || !settings) return;
+
+        console.log('[useWater] Resetting water intake to 0');
+
+        // Clear history
+        setAdditionHistory([]);
+
+        // Reset to 0
+        setTodayLog(prev => ({
+            id: prev?.id || 'temp-id',
+            userId: user.uid,
+            date: prev?.date || new Date().toISOString().split('T')[0],
+            amount: 0,
+            goal: settings.calculatedGoal,
+            updatedAt: prev?.updatedAt || (null as any)
+        }));
+
+        await updateWaterIntake(user.uid, 0, settings.calculatedGoal);
+    }, [user, settings]);
+
     return {
         settings,
         todayLog,
         loading,
         updateSettings,
+        setManualGoal,
         addWater,
+        undoLastAddition,
+        resetWater,
+        canUndo: additionHistory.length > 0,
+        undoCount: additionHistory.length,
         calculateGoal // Exposed for preview
     };
 };

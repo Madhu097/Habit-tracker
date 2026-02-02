@@ -15,14 +15,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Habit Tracker - Build Better Habits, One Day at a Time",
-    template: "%s | Habit Tracker"
+    default: "HabitFlow - Build Better Habits, Flow Through Life",
+    template: "%s | HabitFlow"
   },
-  description: "Track your daily habits, build streaks, and achieve your goals with our powerful habit tracking application. Features analytics, streak tracking, and beautiful insights to transform your life.",
-  keywords: ["habit tracker", "daily habits", "streak tracking", "goal setting", "productivity", "self improvement", "habit building", "routine tracker"],
-  authors: [{ name: "Habit Tracker Team" }],
-  creator: "Habit Tracker",
-  publisher: "Habit Tracker",
+  description: "Track your daily habits, build streaks, and achieve your goals with HabitFlow. Features analytics, streak tracking, and beautiful insights to transform your life.",
+  keywords: ["habit tracker", "habitflow", "daily habits", "streak tracking", "goal setting", "productivity", "self improvement", "habit building", "routine tracker"],
+  authors: [{ name: "HabitFlow Team" }],
+  creator: "HabitFlow",
+  publisher: "HabitFlow",
   formatDetection: {
     email: false,
     address: false,
@@ -33,10 +33,10 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: "Habit Tracker - Build Better Habits, One Day at a Time",
+    title: "HabitFlow - Build Better Habits, Flow Through Life",
     description: "Track your daily habits, build streaks, and achieve your goals with powerful analytics and insights.",
     url: '/',
-    siteName: 'Habit Tracker',
+    siteName: 'HabitFlow',
     locale: 'en_US',
     type: 'website',
     images: [
@@ -44,16 +44,16 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Habit Tracker - Build Better Habits',
+        alt: 'HabitFlow - Build Better Habits',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Habit Tracker - Build Better Habits",
+    title: "HabitFlow - Build Better Habits",
     description: "Track your daily habits, build streaks, and achieve your goals with powerful analytics.",
     images: ['/og-image.png'],
-    creator: '@habittracker',
+    creator: '@habitflow',
   },
   robots: {
     index: true,
@@ -67,9 +67,14 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon.png?v=2', type: 'image/png' },
+      { url: '/favicon.ico?v=2', sizes: 'any' }
+    ],
+    shortcut: '/favicon.png?v=2',
+    apple: [
+      { url: '/apple-touch-icon.png?v=2', sizes: '180x180', type: 'image/png' },
+    ],
   },
   manifest: '/site.webmanifest',
   verification: {

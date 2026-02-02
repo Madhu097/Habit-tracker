@@ -11,9 +11,11 @@ interface WaterIntakeCalculatorProps {
 }
 
 export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCalculatorProps) {
-    const { updateSettings, calculateGoal } = useWater();
+    const { updateSettings, setManualGoal, calculateGoal } = useWater();
     const [step, setStep] = useState<'input' | 'result'>('input');
+    const [mode, setMode] = useState<'calculate' | 'manual'>('calculate');
     const [calculatedGoal, setCalculatedGoal] = useState(0);
+    const [manualGoalInput, setManualGoalInput] = useState(2500);
 
     // Form State
     const [weight, setWeight] = useState(70);
@@ -31,18 +33,25 @@ export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCa
     if (!isOpen) return null;
 
     const handleCalculate = async () => {
-        // Calculate the goal
-        const goal = calculateGoal(weight, activity, climate);
-        setCalculatedGoal(goal);
-
-        // Show result screen
-        setStep('result');
-
-        // Update settings in background
-        try {
-            await updateSettings(weight, activity, climate);
-        } catch (error) {
-            console.error('[WaterCalculator] Error updating water settings:', error);
+        if (mode === 'manual') {
+            // Use manual goal
+            setCalculatedGoal(manualGoalInput);
+            setStep('result');
+            try {
+                await setManualGoal(manualGoalInput);
+            } catch (error) {
+                console.error('[WaterCalculator] Error setting manual goal:', error);
+            }
+        } else {
+            // Calculate the goal
+            const goal = calculateGoal(weight, activity, climate);
+            setCalculatedGoal(goal);
+            setStep('result');
+            try {
+                await updateSettings(weight, activity, climate);
+            } catch (error) {
+                console.error('[WaterCalculator] Error updating water settings:', error);
+            }
         }
     };
 
@@ -78,80 +87,128 @@ export default function WaterIntakeCalculator({ isOpen, onClose }: WaterIntakeCa
                 <div className="p-8">
                     {step === 'input' ? (
                         <div className="space-y-6">
-                            {/* Weight */}
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    <Calculator className="w-4 h-4 text-blue-500" />
-                                    Current Weight (kg)
-                                </label>
-                                <input
-                                    type="range"
-                                    min="30"
-                                    max="150"
-                                    value={weight}
-                                    onChange={(e) => setWeight(Number(e.target.value))}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                />
-                                <div className="text-center font-bold text-2xl text-slate-800 dark:text-white">
-                                    {weight} <span className="text-sm font-normal text-gray-500">kg</span>
-                                </div>
+                            {/* Mode Selection */}
+                            <div className="flex gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-xl">
+                                <button
+                                    onClick={() => setMode('calculate')}
+                                    className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${mode === 'calculate'
+                                            ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    🤖 AI Calculate
+                                </button>
+                                <button
+                                    onClick={() => setMode('manual')}
+                                    className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${mode === 'manual'
+                                            ? 'bg-white dark:bg-slate-700 text-blue-600 shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700'
+                                        }`}
+                                >
+                                    ✏️ Set Manually
+                                </button>
                             </div>
 
-                            {/* Activity */}
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    <Activity className="w-4 h-4 text-green-500" />
-                                    Activity Level
-                                </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {['sedentary', 'moderate', 'active'].map((level) => (
-                                        <button
-                                            key={level}
-                                            onClick={() => setActivity(level as any)}
-                                            className={`py-2 px-1 text-xs sm:text-sm rounded-xl font-medium capitalize transition-all border-2 ${activity === level
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                                                : 'border-transparent bg-gray-100 dark:bg-slate-800 text-gray-500'
-                                                }`}
-                                        >
-                                            {level}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            {mode === 'calculate' ? (
+                                <>
+                                    {/* Weight */}
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <Calculator className="w-4 h-4 text-blue-500" />
+                                            Current Weight (kg)
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min="30"
+                                            max="150"
+                                            value={weight}
+                                            onChange={(e) => setWeight(Number(e.target.value))}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                        />
+                                        <div className="text-center font-bold text-2xl text-slate-800 dark:text-white">
+                                            {weight} <span className="text-sm font-normal text-gray-500">kg</span>
+                                        </div>
+                                    </div>
 
-                            {/* Climate */}
-                            <div className="space-y-3">
-                                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    <Sun className="w-4 h-4 text-orange-500" />
-                                    Climate Environment
-                                </label>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={() => setClimate('normal')}
-                                        className={`flex-1 py-3 rounded-xl font-medium transition-all border-2 ${climate === 'normal'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30'
-                                            : 'border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700'
-                                            }`}
-                                    >
-                                        Average
-                                    </button>
-                                    <button
-                                        onClick={() => setClimate('hot')}
-                                        className={`flex-1 py-3 rounded-xl font-medium transition-all border-2 ${climate === 'hot'
-                                            ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-900/30'
-                                            : 'border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700'
-                                            }`}
-                                    >
-                                        Hot / Humid
-                                    </button>
+                                    {/* Activity */}
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <Activity className="w-4 h-4 text-green-500" />
+                                            Activity Level
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['sedentary', 'moderate', 'active'].map((level) => (
+                                                <button
+                                                    key={level}
+                                                    onClick={() => setActivity(level as any)}
+                                                    className={`py-2 px-1 text-xs sm:text-sm rounded-xl font-medium capitalize transition-all border-2 ${activity === level
+                                                        ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                                                        : 'border-transparent bg-gray-100 dark:bg-slate-800 text-gray-500'
+                                                        }`}
+                                                >
+                                                    {level}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Climate */}
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <Sun className="w-4 h-4 text-orange-500" />
+                                            Climate Environment
+                                        </label>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => setClimate('normal')}
+                                                className={`flex-1 py-3 rounded-xl font-medium transition-all border-2 ${climate === 'normal'
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30'
+                                                    : 'border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700'
+                                                    }`}
+                                            >
+                                                Average
+                                            </button>
+                                            <button
+                                                onClick={() => setClimate('hot')}
+                                                className={`flex-1 py-3 rounded-xl font-medium transition-all border-2 ${climate === 'hot'
+                                                    ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-900/30'
+                                                    : 'border-gray-200 bg-white dark:bg-slate-800 dark:border-slate-700'
+                                                    }`}
+                                            >
+                                                Hot / Humid
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="space-y-4 py-4">
+                                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        <Droplets className="w-4 h-4 text-blue-500" />
+                                        Your Daily Water Goal (ml)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="500"
+                                        max="10000"
+                                        step="100"
+                                        value={manualGoalInput}
+                                        onChange={(e) => setManualGoalInput(Number(e.target.value))}
+                                        className="w-full px-4 py-3 text-center text-3xl font-bold bg-gray-50 dark:bg-slate-800 border-2 border-blue-200 dark:border-blue-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-white"
+                                    />
+                                    <p className="text-center text-sm text-gray-500">
+                                        ≈ {(manualGoalInput / 250).toFixed(1)} glasses (250ml each)
+                                    </p>
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-sm text-gray-600 dark:text-gray-400">
+                                        💡 <strong>Tip:</strong> Most adults need 2000-3000ml per day. Adjust based on your activity level and climate.
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             <button
                                 onClick={handleCalculate}
                                 className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-slate-200 dark:shadow-none transition-all hover:scale-[1.02]"
                             >
-                                Calculate My Plan
+                                {mode === 'calculate' ? 'Calculate My Plan' : 'Set My Goal'}
                                 <ArrowRight className="w-5 h-5" />
                             </button>
                         </div>

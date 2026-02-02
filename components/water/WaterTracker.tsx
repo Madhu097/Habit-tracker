@@ -2,18 +2,23 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Droplets, Plus, Settings, CupSoda, CheckCircle } from 'lucide-react';
+import { Droplets, Plus, Settings, CupSoda, CheckCircle, Undo2, Trash2 } from 'lucide-react';
 import { useWater } from '@/hooks/useWater';
 import WaterIntakeCalculator from './WaterIntakeCalculator';
 
 export default function WaterTracker() {
-    const { settings, todayLog, addWater, loading } = useWater();
+    const { settings, todayLog, addWater, undoLastAddition, resetWater, canUndo, undoCount, setManualGoal, loading } = useWater();
     const [showCalculator, setShowCalculator] = useState(false);
     const [adding, setAdding] = useState<number | null>(null);
 
     const goal = settings?.calculatedGoal || 2500;
     const current = todayLog?.amount || 0;
     const percentage = Math.min(100, Math.round((current / goal) * 100));
+
+    // Debug logging
+    React.useEffect(() => {
+        console.log('[WaterTracker] canUndo:', canUndo, 'undoCount:', undoCount, 'current:', current);
+    }, [canUndo, undoCount, current]);
 
     const handleAdd = async (amount: number) => {
         setAdding(amount);
@@ -75,11 +80,148 @@ export default function WaterTracker() {
                 whileHover={{ y: -5 }}
                 className="relative h-full bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col"
             >
-                {/* Background Wave Animation (Fill effect) */}
+                {/* Enhanced Realistic Water Tank Animation */}
                 <div
-                    className="absolute bottom-0 left-0 right-0 bg-blue-50 dark:bg-blue-900/20 transition-all duration-1000 ease-in-out z-0"
+                    className="absolute bottom-0 left-0 right-0 transition-all duration-[2000ms] ease-out z-0"
                     style={{ height: `${percentage}%` }}
-                />
+                >
+                    {/* Water Body with Gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-blue-400/40 via-blue-500/30 to-blue-600/40 dark:from-blue-500/30 dark:via-blue-600/25 dark:to-blue-700/35" />
+
+                    {/* Animated Bubbles */}
+                    {percentage > 10 && (
+                        <>
+                            <motion.div
+                                className="absolute w-2 h-2 bg-white/40 rounded-full"
+                                style={{ left: '20%', bottom: '10%' }}
+                                animate={{
+                                    y: [0, -100, -200],
+                                    opacity: [0, 0.6, 0],
+                                    scale: [0.5, 1, 0.5]
+                                }}
+                                transition={{
+                                    duration: 3,
+                                    repeat: Infinity,
+                                    ease: "easeOut"
+                                }}
+                            />
+                            <motion.div
+                                className="absolute w-1.5 h-1.5 bg-white/30 rounded-full"
+                                style={{ left: '60%', bottom: '5%' }}
+                                animate={{
+                                    y: [0, -120, -240],
+                                    opacity: [0, 0.5, 0],
+                                    scale: [0.5, 1.2, 0.5]
+                                }}
+                                transition={{
+                                    duration: 4,
+                                    repeat: Infinity,
+                                    delay: 1,
+                                    ease: "easeOut"
+                                }}
+                            />
+                            <motion.div
+                                className="absolute w-1 h-1 bg-white/25 rounded-full"
+                                style={{ left: '80%', bottom: '15%' }}
+                                animate={{
+                                    y: [0, -80, -160],
+                                    opacity: [0, 0.4, 0],
+                                    scale: [0.5, 1, 0.5]
+                                }}
+                                transition={{
+                                    duration: 3.5,
+                                    repeat: Infinity,
+                                    delay: 2,
+                                    ease: "easeOut"
+                                }}
+                            />
+                            <motion.div
+                                className="absolute w-2 h-2 bg-white/35 rounded-full"
+                                style={{ left: '40%', bottom: '8%' }}
+                                animate={{
+                                    y: [0, -150, -300],
+                                    opacity: [0, 0.5, 0],
+                                    scale: [0.5, 1.3, 0.5]
+                                }}
+                                transition={{
+                                    duration: 4.5,
+                                    repeat: Infinity,
+                                    delay: 0.5,
+                                    ease: "easeOut"
+                                }}
+                            />
+                        </>
+                    )}
+
+                    {/* Smooth Wave Animation */}
+                    <svg
+                        className="absolute bottom-0 w-full h-32"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 1440 320"
+                        preserveAspectRatio="none"
+                    >
+                        <defs>
+                            <linearGradient id="waveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stopColor="rgba(96, 165, 250, 0.6)" />
+                                <stop offset="50%" stopColor="rgba(59, 130, 246, 0.4)" />
+                                <stop offset="100%" stopColor="rgba(37, 99, 235, 0.3)" />
+                            </linearGradient>
+                        </defs>
+
+                        {/* Primary Wave */}
+                        <path
+                            fill="url(#waveGradient)"
+                            d="M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,154.7C672,149,768,171,864,186.7C960,203,1056,213,1152,208C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+                        >
+                            <animate
+                                attributeName="d"
+                                dur="5s"
+                                repeatCount="indefinite"
+                                values="
+                                    M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,154.7C672,149,768,171,864,186.7C960,203,1056,213,1152,208C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,192L48,181.3C96,171,192,149,288,154.7C384,160,480,192,576,197.3C672,203,768,181,864,170.7C960,160,1056,160,1152,170.7C1248,181,1344,203,1392,213.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,224L48,213.3C96,203,192,181,288,186.7C384,192,480,224,576,229.3C672,235,768,213,864,197.3C960,181,1056,171,1152,181.3C1248,192,1344,224,1392,240L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,160L48,170.7C96,181,192,203,288,197.3C384,192,480,160,576,154.7C672,149,768,171,864,186.7C960,203,1056,213,1152,208C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
+                                "
+                            />
+                        </path>
+
+                        {/* Secondary Wave (Overlay) */}
+                        <path
+                            fill="rgba(59, 130, 246, 0.25)"
+                            d="M0,256L48,240C96,224,192,192,288,197.3C384,203,480,245,576,250.7C672,256,768,224,864,213.3C960,203,1056,213,1152,224C1248,235,1344,245,1392,250.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+                        >
+                            <animate
+                                attributeName="d"
+                                dur="4s"
+                                repeatCount="indefinite"
+                                values="
+                                    M0,256L48,240C96,224,192,192,288,197.3C384,203,480,245,576,250.7C672,256,768,224,864,213.3C960,203,1056,213,1152,224C1248,235,1344,245,1392,250.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,224L48,234.7C96,245,192,267,288,261.3C384,256,480,224,576,218.7C672,213,768,235,864,245.3C960,256,1056,256,1152,245.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,288L48,277.3C96,267,192,245,288,240C384,235,480,245,576,256C672,267,768,277,864,272C960,267,1056,245,1152,234.7C1248,224,1344,224,1392,224L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,256L48,240C96,224,192,192,288,197.3C384,203,480,245,576,250.7C672,256,768,224,864,213.3C960,203,1056,213,1152,224C1248,235,1344,245,1392,250.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
+                                "
+                            />
+                        </path>
+
+                        {/* Top Shimmer Effect */}
+                        <path
+                            fill="rgba(255, 255, 255, 0.15)"
+                            d="M0,288L48,282.7C96,277,192,267,288,272C384,277,480,299,576,293.3C672,288,768,256,864,250.7C960,245,1056,267,1152,272C1248,277,1344,267,1392,261.3L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+                        >
+                            <animate
+                                attributeName="d"
+                                dur="3s"
+                                repeatCount="indefinite"
+                                values="
+                                    M0,288L48,282.7C96,277,192,267,288,272C384,277,480,299,576,293.3C672,288,768,256,864,250.7C960,245,1056,267,1152,272C1248,277,1344,267,1392,261.3L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,272L48,277.3C96,283,192,293,288,288C384,283,480,261,576,256C672,251,768,261,864,272C960,283,1056,293,1152,288C1248,283,1344,261,1392,250.7L1440,240L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                                    M0,288L48,282.7C96,277,192,267,288,272C384,277,480,299,576,293.3C672,288,768,256,864,250.7C960,245,1056,267,1152,272C1248,277,1344,267,1392,261.3L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
+                                "
+                            />
+                        </path>
+                    </svg>
+                </div>
 
                 <div className="relative z-10 flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2">
@@ -91,12 +233,23 @@ export default function WaterTracker() {
                             <p className="text-xs text-slate-500 font-medium">Daily Goal: {goal}ml</p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowCalculator(true)}
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                    >
-                        <Settings className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {current > 0 && (
+                            <button
+                                onClick={resetWater}
+                                className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
+                                title="Reset to 0ml"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowCalculator(true)}
+                            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                        >
+                            <Settings className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Main Progress Display */}
@@ -122,7 +275,21 @@ export default function WaterTracker() {
                 </div>
 
                 {/* Quick Add Buttons */}
-                <div className="relative z-10 grid grid-cols-2 gap-3 mt-auto">
+                <div className={`relative z-10 grid gap-3 mt-auto transition-all ${canUndo ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                    <AnimatePresence>
+                        {canUndo && (
+                            <motion.button
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                onClick={undoLastAddition}
+                                className="flex items-center justify-center gap-2 py-3 bg-gradient-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-xl shadow-md shadow-orange-200 dark:shadow-none transition-all active:scale-95"
+                            >
+                                <Undo2 className="w-4 h-4" />
+                                <span className="text-sm font-bold">Undo {undoCount > 1 && `(${undoCount})`}</span>
+                            </motion.button>
+                        )}
+                    </AnimatePresence>
                     <button
                         onClick={() => handleAdd(250)}
                         disabled={adding !== null}

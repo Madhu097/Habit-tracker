@@ -19,6 +19,7 @@ import { motion } from 'framer-motion';
 
 // Lazy load analytics for code splitting
 const AnalyticsCharts = lazy(() => import('@/components/analytics/AnalyticsCharts'));
+import Logo from '@/components/ui/Logo';
 
 export default function DashboardPage() {
     const { user, loading: authLoading } = useAuth();
@@ -139,9 +140,9 @@ export default function DashboardPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-6">
-                            <h1 className={`text-2xl font-bold ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                                Habit Tracker
-                            </h1>
+                            <div className="flex items-center">
+                                <Logo darkMode={darkMode} iconSize={36} textSize="text-2xl" />
+                            </div>
 
                             {/* Navigation Tabs */}
                             <div className={`hidden md:flex items-center gap-2 p-1 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
