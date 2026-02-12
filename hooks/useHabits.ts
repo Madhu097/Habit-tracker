@@ -14,12 +14,13 @@ import {
     subscribeTodayLogs,
 } from '@/lib/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 export const useHabits = () => {
     const { user } = useAuth();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [todayLogs, setTodayLogs] = useState<HabitLog[]>([]);
+    const [yesterdayLogs, setYesterdayLogs] = useState<HabitLog[]>([]);
     const [habitStats, setHabitStats] = useState<HabitStats[]>([]);
 
     const [loading, setLoading] = useState(true);
@@ -60,7 +61,7 @@ export const useHabits = () => {
         loadData();
     }, [user]);
 
-    // Real-time Logs Subscription
+    // Real-time Logs Subscription for Today
     useEffect(() => {
         if (!user) return;
 
@@ -69,6 +70,24 @@ export const useHabits = () => {
         });
 
         return () => unsubscribe();
+    }, [user]);
+
+    // Load Yesterday's Logs (one-time fetch, not real-time)
+    useEffect(() => {
+        if (!user) return;
+
+        const loadYesterdayLogs = async () => {
+            try {
+                const { getLogsForDate } = await import('@/lib/firebase/firestore');
+                const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+                const logs = await getLogsForDate(user.uid, yesterday);
+                setYesterdayLogs(logs);
+            } catch (err) {
+                console.error('[useHabits] Error loading yesterday logs:', err);
+            }
+        };
+
+        loadYesterdayLogs();
     }, [user]);
 
     // Derived State: Combine Data
@@ -110,6 +129,50 @@ export const useHabits = () => {
 
         return combined;
     }, [habits, todayLogs, habitStats]);
+
+    // Yesterday's Habits (incomplete only)
+    const yesterdayHabits = useMemo(() => {
+        if (habits.length === 0) {
+            return [];
+        }
+
+        const yesterday = subDays(new Date(), 1);
+        const filteredHabits = habits.filter(habit => {
+            if (!habit.frequency) return true;
+            if (habit.frequency.type === 'daily') return true;
+            if (habit.frequency.type === 'weekly') return habit.frequency.daysOfWeek?.includes(yesterday.getDay()) ?? false;
+            if (habit.frequency.type === 'monthly') return habit.frequency.daysOfMonth?.includes(yesterday.getDate()) ?? false;
+            return true;
+        });
+
+        // Only show habits that weren't completed or missed yesterday
+        const incomplete = filteredHabits.filter(habit => {
+            const yesterdayLog = yesterdayLogs.find(log => log.habitId === habit.id);
+            // Show only if there's no log at all (user forgot to mark it)
+            return !yesterdayLog;
+        });
+
+        return incomplete.map(habit => {
+            const yesterdayLog = yesterdayLogs.find(log => log.habitId === habit.id);
+            const stat = habitStats.find(s => s.habitId === habit.id);
+
+            return {
+                ...habit,
+                todayLog: yesterdayLog,
+                stats: stat || {
+                    id: `stats-${habit.id}`,
+                    habitId: habit.id,
+                    userId: habit.userId,
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    totalCompleted: 0,
+                    totalMissed: 0,
+                    completionRate: 0,
+                    lastUpdated: habit.updatedAt,
+                },
+            };
+        });
+    }, [habits, yesterdayLogs, habitStats]);
 
 
     const addHabit = useCallback(async (
@@ -206,6 +269,41 @@ export const useHabits = () => {
         }
     }, [user]);
 
+    // Mark habit for a specific date (for yesterday's habits)
+    const markHabitStatusForDate = useCallback(async (habitId: string, status: 'completed' | 'missed', date: Date) => {
+        if (!user) return;
+        try {
+            setError(null);
+            await logHabit(habitId, user.uid, date, status);
+
+            // Refresh yesterday's logs if marking for yesterday
+            const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+            const targetDate = format(date, 'yyyy-MM-dd');
+            if (targetDate === yesterday) {
+                const { getLogsForDate } = await import('@/lib/firebase/firestore');
+                const logs = await getLogsForDate(user.uid, yesterday);
+                setYesterdayLogs(logs);
+            }
+
+            // Refresh stats
+            const updatedStat = await getHabitStats(habitId, user.uid);
+            if (updatedStat) {
+                setHabitStats(prev => {
+                    const idx = prev.findIndex(s => s.habitId === habitId);
+                    if (idx >= 0) {
+                        const newStats = [...prev];
+                        newStats[idx] = updatedStat;
+                        return newStats;
+                    }
+                    return [...prev, updatedStat];
+                });
+            }
+        } catch (err) {
+            setError('Failed to log habit for date');
+            throw err;
+        }
+    }, [user]);
+
     const undoHabitLog = useCallback(async (habitId: string) => {
         if (!user) return;
         try {
@@ -272,12 +370,14 @@ export const useHabits = () => {
     return {
         habits,
         dailyHabits,
+        yesterdayHabits,
         loading,
         error,
         addHabit,
         editHabit,
         removeHabit,
         markHabitStatus,
+        markHabitStatusForDate,
         undoHabitLog,
         refreshHabits: loadHabits,
         resetAllData,

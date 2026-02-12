@@ -15,11 +15,11 @@ export default function MissAnimation({ show, onComplete, habitName }: MissAnima
     useEffect(() => {
         if (show) {
             setIsVisible(true);
-            // Auto-hide after 1 second (quick animation)
+            // Auto-hide after 0.5 seconds (faster)
             const timer = setTimeout(() => {
                 setIsVisible(false);
-                setTimeout(onComplete, 200); // Wait for fade out animation
-            }, 1000);
+                setTimeout(onComplete, 100); // Wait for fade out animation
+            }, 500);
 
             return () => clearTimeout(timer);
         }
@@ -29,7 +29,7 @@ export default function MissAnimation({ show, onComplete, habitName }: MissAnima
 
     return (
         <div
-            className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${isVisible ? 'opacity-100' : 'opacity-0'
+            className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none transition-opacity duration-100 ${isVisible ? 'opacity-100' : 'opacity-0'
                 }`}
         >
             {/* Simple overlay */}
@@ -37,7 +37,7 @@ export default function MissAnimation({ show, onComplete, habitName }: MissAnima
 
             {/* Main Animation Card - Compact */}
             <div
-                className={`relative bg-white rounded-2xl shadow-xl p-6 max-w-sm mx-4 pointer-events-auto transform transition-all duration-300 ${isVisible ? 'scale-100' : 'scale-75'
+                className={`relative bg-white rounded-2xl shadow-xl p-6 max-w-sm mx-4 pointer-events-auto transform transition-all duration-200 ${isVisible ? 'scale-100' : 'scale-75'
                     }`}
             >
                 {/* X Icon with Shake */}
@@ -67,7 +67,7 @@ export default function MissAnimation({ show, onComplete, habitName }: MissAnima
                 <button
                     onClick={() => {
                         setIsVisible(false);
-                        setTimeout(onComplete, 200);
+                        setTimeout(onComplete, 100);
                     }}
                     className="mt-4 w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition-all duration-200"
                 >

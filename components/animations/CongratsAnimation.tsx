@@ -15,11 +15,11 @@ export default function CongratsAnimation({ show, onComplete, habitName }: Congr
     useEffect(() => {
         if (show) {
             setIsVisible(true);
-            // Auto-hide after 1.2 seconds
+            // Auto-hide after 0.6 seconds (faster)
             const timer = setTimeout(() => {
                 setIsVisible(false);
-                setTimeout(onComplete, 300); // Wait for fade out animation
-            }, 1200);
+                setTimeout(onComplete, 150); // Wait for fade out animation
+            }, 600);
 
             return () => clearTimeout(timer);
         }
@@ -29,7 +29,7 @@ export default function CongratsAnimation({ show, onComplete, habitName }: Congr
 
     return (
         <div
-            className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'
+            className={`fixed inset-0 z-50 flex items-center justify-center pointer-events-none transition-opacity duration-150 ${isVisible ? 'opacity-100' : 'opacity-0'
                 }`}
         >
             {/* Confetti Background */}
@@ -59,7 +59,7 @@ export default function CongratsAnimation({ show, onComplete, habitName }: Congr
 
             {/* Main Animation Card */}
             <div
-                className={`relative bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-4 pointer-events-auto transform transition-all duration-500 ${isVisible ? 'scale-100 rotate-0' : 'scale-0 rotate-12'
+                className={`relative bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-4 pointer-events-auto transform transition-all duration-300 ${isVisible ? 'scale-100 rotate-0' : 'scale-0 rotate-12'
                     }`}
             >
                 {/* Sparkle Icons */}
@@ -112,7 +112,7 @@ export default function CongratsAnimation({ show, onComplete, habitName }: Congr
                 <button
                     onClick={() => {
                         setIsVisible(false);
-                        setTimeout(onComplete, 300);
+                        setTimeout(onComplete, 150);
                     }}
                     className="mt-6 w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
                 >

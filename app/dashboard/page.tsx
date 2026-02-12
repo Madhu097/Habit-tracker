@@ -11,8 +11,8 @@ import EditHabitModal from '@/components/habits/EditHabitModal';
 import MonthlyView from '@/components/habits/MonthlyView';
 import HamburgerMenu from '@/components/ui/HamburgerMenu';
 import MobileMenu from '@/components/ui/MobileMenu';
-import { Plus, BarChart3, LogOut, Loader2, Trash2, CalendarDays } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, BarChart3, LogOut, Loader2, Trash2, CalendarDays, Clock, CheckCircle } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 import { DailyHabitView } from '@/types';
 import WaterTracker from '@/components/water/WaterTracker';
 import { motion } from 'framer-motion';
@@ -23,7 +23,7 @@ import Logo from '@/components/ui/Logo';
 
 export default function DashboardPage() {
     const { user, loading: authLoading } = useAuth();
-    const { dailyHabits, loading, error, addHabit, editHabit, markHabitStatus, undoHabitLog, removeHabit, resetAllData, habits } = useHabits();
+    const { dailyHabits, yesterdayHabits, loading, error, addHabit, editHabit, markHabitStatus, markHabitStatusForDate, undoHabitLog, removeHabit, resetAllData, habits } = useHabits();
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingHabit, setEditingHabit] = useState<DailyHabitView | null>(null);
@@ -32,6 +32,7 @@ export default function DashboardPage() {
     const [darkMode, setDarkMode] = useState(false);
     const [resetting, setResetting] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [showYesterdayView, setShowYesterdayView] = useState(false);
     const router = useRouter();
 
     // Load dark mode preference
@@ -88,6 +89,16 @@ export default function DashboardPage() {
         } catch (error) {
             console.error('Failed to undo:', error);
         }
+    };
+
+    const handleYesterdayComplete = async (habitId: string) => {
+        const yesterday = subDays(new Date(), 1);
+        await markHabitStatusForDate(habitId, 'completed', yesterday);
+    };
+
+    const handleYesterdayMiss = async (habitId: string) => {
+        const yesterday = subDays(new Date(), 1);
+        await markHabitStatusForDate(habitId, 'missed', yesterday);
     };
 
     const handleEdit = (habitId: string) => {
@@ -289,93 +300,129 @@ export default function DashboardPage() {
                     </>
                 ) : !showAnalytics ? (
                     <>
-                        {/* Welcome Section */}
-                        <div className="mb-8">
-                            <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                                Welcome back, {user.displayName || 'there'}!
-                            </h2>
-                            <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>
-                                Track your daily habits and build consistency
-                            </p>
+                        {/* Welcome Section with Yesterday Button */}
+                        <div className="mb-8 flex items-center justify-between">
+                            <div>
+                                <h2 className={`text-xl font-semibold mb-2 ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                    {showYesterdayView
+                                        ? `Yesterday's Habits - ${format(subDays(new Date(), 1), 'EEEE, MMMM d')}`
+                                        : `Welcome back, ${user.displayName || 'there'}!`
+                                    }
+                                </h2>
+                                <p className={darkMode ? 'text-slate-400' : 'text-slate-600'}>
+                                    {showYesterdayView
+                                        ? 'Complete habits you missed from yesterday'
+                                        : 'Track your daily habits and build consistency'
+                                    }
+                                </p>
+                            </div>
+
+                            {/* Toggle Yesterday Button */}
+                            {(yesterdayHabits.length > 0 || showYesterdayView) && (
+                                <button
+                                    onClick={() => setShowYesterdayView(!showYesterdayView)}
+                                    className={`relative flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${showYesterdayView
+                                        ? darkMode
+                                            ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                                            : 'bg-yellow-500 text-white hover:bg-yellow-600'
+                                        : darkMode
+                                            ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                        }`}
+                                >
+                                    <Clock className="w-4 h-4" />
+                                    <span>{showYesterdayView ? "Today's Habits" : "Yesterday's Habits"}</span>
+                                    {!showYesterdayView && yesterdayHabits.length > 0 && (
+                                        <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-bold ${darkMode ? 'bg-yellow-600 text-white' : 'bg-yellow-500 text-white'
+                                            }`}>
+                                            {yesterdayHabits.length}
+                                        </span>
+                                    )}
+                                </button>
+                            )}
                         </div>
 
                         {/* Grid container for Date Card and Water Tracker */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            {/* Today's Date Card */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                                className={`p-6 rounded-2xl border-2 flex flex-col h-full ${darkMode
-                                    ? 'bg-slate-800/50 border-slate-700'
-                                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                        {!showYesterdayView && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                {/* Today's Date Card */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                    className={`p-6 rounded-2xl border-2 flex flex-col h-full ${darkMode
+                                        ? 'bg-slate-800/50 border-slate-700'
+                                        : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-4 mb-4">
+                                        <div className={`p-4 rounded-xl ${darkMode ? 'bg-blue-600/20' : 'bg-blue-600 text-white shadow-lg shadow-blue-200'}`}>
+                                            <svg className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className={`text-sm font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                Today's Overview
+                                            </p>
+                                            <p suppressHydrationWarning className={`text-2xl font-black ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                                                {format(new Date(), 'EEEE')}
+                                            </p>
+                                            <p suppressHydrationWarning className={`text-lg font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                {format(new Date(), 'MMMM d, yyyy')}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Today's Stats */}
+                                    <div className="mt-auto grid grid-cols-3 gap-3">
+                                        <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-white/70'}`}>
+                                            <div className={`text-2xl font-black ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                                {dailyHabits.length}
+                                            </div>
+                                            <div className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                Total
+                                            </div>
+                                        </div>
+                                        <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-white/70'}`}>
+                                            <div className={`text-2xl font-black ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
+                                                {dailyHabits.filter(h => h.todayLog?.status === 'completed').length}
+                                            </div>
+                                            <div className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                Done
+                                            </div>
+                                        </div>
+                                        <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-white/70'}`}>
+                                            <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                                                {dailyHabits.filter(h => !h.todayLog || h.todayLog.status === 'pending').length}
+                                            </div>
+                                            <div className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                                Pending
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+
+                                {/* Water Tracker */}
+                                <div className="h-64 sm:h-auto">
+                                    <WaterTracker />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add Habit Button - Only show in today view */}
+                        {!showYesterdayView && (
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors mb-6 ${darkMode
+                                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
                                     }`}
                             >
-                                <div className="flex items-start gap-4 mb-4">
-                                    <div className={`p-4 rounded-xl ${darkMode ? 'bg-blue-600/20' : 'bg-blue-600 text-white shadow-lg shadow-blue-200'}`}>
-                                        <svg className={`w-8 h-8 ${darkMode ? 'text-blue-400' : 'text-white'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className={`text-sm font-bold uppercase tracking-wider mb-1 ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                            Today's Overview
-                                        </p>
-                                        <p suppressHydrationWarning className={`text-2xl font-black ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
-                                            {format(new Date(), 'EEEE')}
-                                        </p>
-                                        <p suppressHydrationWarning className={`text-lg font-medium ${darkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                                            {format(new Date(), 'MMMM d, yyyy')}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Today's Stats */}
-                                <div className="mt-auto grid grid-cols-3 gap-3">
-                                    <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-white/70'}`}>
-                                        <div className={`text-2xl font-black ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                            {dailyHabits.length}
-                                        </div>
-                                        <div className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                            Total
-                                        </div>
-                                    </div>
-                                    <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-white/70'}`}>
-                                        <div className={`text-2xl font-black ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                                            {dailyHabits.filter(h => h.todayLog?.status === 'completed').length}
-                                        </div>
-                                        <div className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                            Done
-                                        </div>
-                                    </div>
-                                    <div className={`text-center p-3 rounded-lg ${darkMode ? 'bg-slate-700/50' : 'bg-white/70'}`}>
-                                        <div className={`text-2xl font-black ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                                            {dailyHabits.filter(h => !h.todayLog || h.todayLog.status === 'pending').length}
-                                        </div>
-                                        <div className={`text-xs font-semibold ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                            Pending
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            {/* Water Tracker */}
-                            <div className="h-64 sm:h-auto">
-                                <WaterTracker />
-                            </div>
-                        </div>
-
-                        {/* Add Habit Button */}
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors mb-6 ${darkMode
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                }`}
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add New Habit
-                        </button>
+                                <Plus className="w-5 h-5" />
+                                Add New Habit
+                            </button>
+                        )}
 
                         {/* Error Message */}
                         {error && (
@@ -395,7 +442,7 @@ export default function DashboardPage() {
                         )}
 
                         {/* Habits Grid */}
-                        {!loading && dailyHabits.length === 0 && (
+                        {!loading && !showYesterdayView && dailyHabits.length === 0 && (
                             <div className="text-center py-12">
                                 <div className={darkMode ? 'text-slate-600' : 'text-slate-400'}>
                                     <Plus className="w-16 h-16 mx-auto mb-4" />
@@ -419,7 +466,8 @@ export default function DashboardPage() {
                             </div>
                         )}
 
-                        {!loading && dailyHabits.length > 0 && (
+                        {/* Today's Habits */}
+                        {!loading && !showYesterdayView && dailyHabits.length > 0 && (
                             <motion.div
                                 variants={container}
                                 initial="hidden"
@@ -439,6 +487,48 @@ export default function DashboardPage() {
                                     </motion.div>
                                 ))}
                             </motion.div>
+                        )}
+
+                        {/* Yesterday's Habits */}
+                        {!loading && showYesterdayView && yesterdayHabits.length > 0 && (
+                            <motion.div
+                                variants={container}
+                                initial="hidden"
+                                animate="show"
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                            >
+                                {yesterdayHabits.map((habit) => (
+                                    <motion.div
+                                        key={habit.id}
+                                        variants={item}
+                                        className={`relative overflow-hidden rounded-xl border-2 ${darkMode ? 'border-yellow-600/30 bg-slate-800/50' : 'border-yellow-200 bg-yellow-50/50'}`}
+                                    >
+                                        <HabitCard
+                                            habit={habit}
+                                            onComplete={() => handleYesterdayComplete(habit.id)}
+                                            onMiss={() => handleYesterdayMiss(habit.id)}
+                                            onUndo={() => handleUndo(habit.id)}
+                                            onEdit={() => handleEdit(habit.id)}
+                                            onDelete={() => handleDelete(habit.id)}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        )}
+
+                        {/* No Yesterday Habits Message */}
+                        {!loading && showYesterdayView && yesterdayHabits.length === 0 && (
+                            <div className="text-center py-12">
+                                <div className={darkMode ? 'text-slate-600' : 'text-slate-400'}>
+                                    <CheckCircle className="w-16 h-16 mx-auto mb-4" />
+                                </div>
+                                <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-slate-300' : 'text-slate-900'}`}>
+                                    All caught up!
+                                </h3>
+                                <p className={`mb-4 ${darkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                    You completed all your habits yesterday. Great job!
+                                </p>
+                            </div>
                         )}
                     </>
                 ) : (

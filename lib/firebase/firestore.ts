@@ -235,6 +235,18 @@ export const getTodayLogsForUser = async (userId: string): Promise<HabitLog[]> =
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HabitLog));
 };
 
+// Get logs for a specific date
+export const getLogsForDate = async (userId: string, dateStr: string): Promise<HabitLog[]> => {
+    const q = query(
+        collection(db, HABIT_LOGS_COLLECTION),
+        where('userId', '==', userId),
+        where('date', '==', dateStr)
+    );
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HabitLog));
+};
+
 // Real-time listener for today's habits (only use for today's view)
 export const subscribeTodayLogs = (
     userId: string,
